@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Source UI - 模拟移动操作系统界面</title>
+    <!-- 引入鸿蒙开源字体 HarmonyOS Sans 免费CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/harmonyos-sans@4.0.0/index.min.css">
+    <!-- 引入 Anime.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* 全局替换为鸿蒙字体，兜底系统无衬线字体 */
+            font-family: "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, fill 0.3s ease, opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button::-moz-focus-inner,
+        a::-moz-focus-inner {
+            border: 0;
+        }
+        button, a, input, select {
+            outline: none !important;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        button:focus, a:focus,
+        button:focus-visible, a:focus-visible {
+            outline: 0 !important;
+            box-shadow: none !important;
+        }
+        :root {
+            --bg-main: #1a1a1a;
+            --bg-card: #2d2d2d;
+            --bg-code: #1e1e1e;
+            --bg-btn-git: #444444;
+            --text-main: #f5f5f5;
+            --text-secondary: #e0e0e0;
+            --text-tertiary: #b0b0b0;
+            --text-code: #dcdcdc;
+            --border-color: #444444;
+            --accent-color: #42b983;
+            --bili-color: #fb7299;
+            --shadow: 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --bg-lang: #2d2d2d;
+            --text-sm: #999999;
+            --text-copyright: #666666;
+            --icon-color: #e0e0e0;
+            --modal-mask: rgba(0,0,0,0.3);
+            --modal-bg: #2d2d2d;
+        }
+        html {
+            background-color: var(--bg-main);
+            transition: background-color 0.3s ease;
+        }
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 80px;
+            padding-bottom: 80px;
+            position: relative;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 背景流动光效容器 */
+        .bg-light-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        /* 流动光球 */
+        .light-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            transition: transform 0.3s ease-out;
+            will-change: transform;
+        }
+
+        .light-orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+            top: 10%;
+            left: 10%;
+            animation: float-orb-1 20s ease-in-out infinite;
+        }
+
+        .light-orb-2 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--bili-color) 0%, transparent 70%);
+            top: 60%;
+            right: 10%;
+            animation: float-orb-2 25s ease-in-out infinite;
+        }
+
+        .light-orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, #6b8dd6 0%, transparent 70%);
+            bottom: 20%;
+            left: 30%;
+            animation: float-orb-3 22s ease-in-out infinite;
+        }
+
+        .light-orb-4 {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, #a78bfa 0%, transparent 70%);
+            top: 30%;
+            right: 30%;
+            animation: float-orb-4 18s ease-in-out infinite;
+        }
+
+        @keyframes float-orb-1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, 30px) scale(1.1); }
+            50% { transform: translate(20px, 60px) scale(0.9); }
+            75% { transform: translate(-30px, 40px) scale(1.05); }
+        }
+
+        @keyframes float-orb-2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-40px, 50px) scale(0.95); }
+            50% { transform: translate(-60px, -20px) scale(1.1); }
+            75% { transform: translate(-20px, -40px) scale(0.9); }
+        }
+
+        @keyframes float-orb-3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.15); }
+            66% { transform: translate(-20px, 20px) scale(0.85); }
+        }
+
+        @keyframes float-orb-4 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, 40px) scale(1.2); }
+        }
+
+        /* 新增光球 */
+        .light-orb-5 {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #f472b6 0%, transparent 70%);
+            top: 80%;
+            left: 70%;
+            animation: float-orb-5 15s ease-in-out infinite;
+        }
+
+        .light-orb-6 {
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle, #34d399 0%, transparent 70%);
+            top: 15%;
+            right: 20%;
+            animation: float-orb-6 19s ease-in-out infinite;
+        }
+
+        .light-orb-7 {
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, #fbbf24 0%, transparent 70%);
+            bottom: 40%;
+            right: 5%;
+            animation: float-orb-7 24s ease-in-out infinite;
+        }
+
+        .light-orb-8 {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, #60a5fa 0%, transparent 70%);
+            top: 45%;
+            left: 5%;
+            animation: float-orb-8 17s ease-in-out infinite;
+        }
+
+        @keyframes float-orb-5 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-60px, -40px) scale(1.1); }
+            50% { transform: translate(-30px, 20px) scale(0.9); }
+            75% { transform: translate(20px, -30px) scale(1.05); }
+        }
+
+        @keyframes float-orb-6 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, 30px) scale(1.15); }
+            66% { transform: translate(20px, -50px) scale(0.85); }
+        }
+
+        @keyframes float-orb-7 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-50px, 20px) scale(0.95); }
+            50% { transform: translate(-20px, -40px) scale(1.1); }
+            75% { transform: translate(30px, -20px) scale(0.9); }
+        }
+
+        @keyframes float-orb-8 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(40px, 60px) scale(1.25); }
+        }
+
+        /* 流动光线 */
+        .light-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            opacity: 0.3;
+            filter: blur(1px);
+            animation: flow-line 8s linear infinite;
+        }
+
+        .line-1 {
+            width: 300px;
+            top: 20%;
+            left: -300px;
+            animation-delay: 0s;
+        }
+
+        .line-2 {
+            width: 400px;
+            top: 50%;
+            left: -400px;
+            animation-delay: 3s;
+        }
+
+        .line-3 {
+            width: 250px;
+            top: 80%;
+            left: -250px;
+            animation-delay: 5s;
+        }
+
+        @keyframes flow-line {
+            0% { transform: translateX(0); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateX(calc(100vw + 100%)); opacity: 0; }
+        }
+
+        /* 粒子容器 */
+        .light-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: particle-float 10s linear infinite;
+        }
+
+        @keyframes particle-float {
+            0% { 
+                transform: translateY(100vh) scale(0); 
+                opacity: 0;
+            }
+            10% { 
+                opacity: 0.6;
+            }
+            90% { 
+                opacity: 0.6;
+            }
+            100% { 
+                transform: translateY(-100px) scale(1); 
+                opacity: 0;
+            }
+        }
+
+        /* 鼠标跟随光效 */
+        .cursor-glow {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(66, 185, 131, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+            filter: blur(40px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform: translate(-50%, -50%);
+            will-change: left, top;
+        }
+
+        .cursor-glow-secondary {
+            position: fixed;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(251, 114, 153, 0.4) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+            filter: blur(30px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform: translate(-50%, -50%);
+            will-change: left, top;
+        }
+
+        body:hover .cursor-glow,
+        body:hover .cursor-glow-secondary {
+            opacity: 1;
+        }
+
+        /* 内容层 */
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
+        .control-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 9999;
+        }
+        .lang-select {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-lang);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(0);
+        }
+        .lang-select:hover {
+            background: var(--accent-color);
+            color: #fff;
+        }
+        /* 语言选择模态框样式（保留背景毛玻璃+开闭动画） */
+        .lang-modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-mask);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            /* 模态框背景毛玻璃模糊完整保留 */
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            transform: translateZ(0);
+            will-change: backdrop-filter, opacity;
+            /* 开闭双动画核心配置 */
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.35s ease, visibility 0.35s ease, backdrop-filter 0.35s ease;
+        }
+        .lang-modal-mask.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+        }
+        .lang-modal {
+            background: var(--modal-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            /* 开闭缩放动画 */
+            transform: scale(0.85) translateY(20px);
+            opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+            transform: translateZ(0);
+        }
+        .lang-modal-mask.show .lang-modal {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+        .lang-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .lang-modal-header h3 {
+            font-size: 18px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        .lang-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .lang-modal-close:hover {
+            background: var(--bg-main);
+            color: var(--accent-color);
+        }
+        .lang-modal-options {
+            padding: 8px 0;
+        }
+        .lang-option {
+            padding: 16px 24px;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 16px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .lang-option:hover {
+            background: var(--bg-main);
+            color: var(--accent-color);
+        }
+        .lang-option.active {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        .lang-option.active::after {
+            content: "✓";
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+        header {
+            text-align: center;
+            margin: 20px 0 40px;
+        }
+        .logo {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+        .btn {
+            text-decoration: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: opacity 0.3s, background-color 0.3s;
+            display: inline-block;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            text-decoration: none;
+        }
+        .btn-try {
+            background: var(--accent-color);
+        }
+        .btn-github {
+            background: var(--bg-btn-git);
+        }
+        .btn-bilibili {
+            background: var(--bili-color);
+        }
+        .tag-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            color: var(--text-tertiary);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            font-size: 24px;
+            margin: 40px 0 20px;
+            color: var(--text-main);
+            border-left: 4px solid var(--accent-color);
+            padding-left: 15px;
+        }
+        p {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .tech-card {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        .tech-card h3 {
+            color: var(--accent-color);
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tech-card .tech-name {
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 17px;
+            margin-bottom: 12px;
+        }
+        .tech-card .tech-desc {
+            color: var(--text-sm);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        pre {
+            background: var(--bg-code);
+            color: var(--text-code);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 20px 0;
+            /* 代码块等宽字体兜底 */
+            font-family: "HarmonyOS Sans SC", "Consolas", "Monaco", monospace;
+        }
+        .browser-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .browser-item {
+            background: var(--bg-card);
+            padding: 8px 15px;
+            border-radius: 4px;
+            box-shadow: var(--shadow-sm);
+            color: var(--text-secondary);
+        }
+        .browser-item::before {
+            content: "✅ ";
+            color: var(--accent-color);
+        }
+        footer {
+            text-align: center;
+            margin: 60px 0 20px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+        /* 版权文字缩小+压暗专属样式 */
+        .copyright-text {
+            font-size: 12px;
+            color: var(--text-copyright);
+            margin-bottom: 18px;
+        }
+        /* 标识容器样式 */
+        .protected-badges {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 25px;
+            font-size: 13px;
+            color: var(--text-copyright);
+        }
+        .protected-badges a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-copyright);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .protected-badges a:hover {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        .protected-badges svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--icon-color);
+            transition: fill 0.3s ease;
+        }
+        .protected-badges a:hover svg {
+            fill: var(--accent-color);
+        }
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 480px) {
+            .control-buttons {
+                top: 15px;
+                right: 15px;
+                gap: 8px;
+            }
+            .lang-select {
+                width: 40px;
+                height: 40px;
+                font-size: 12px;
+            }
+            .logo {
+                width: 150px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+            body {
+                padding-top: 70px;
+                padding-bottom: 70px;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            .tech-stack {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .tech-card {
+                padding: 20px;
+            }
+            .protected-badges {
+                gap: 15px;
+                flex-direction: column;
+            }
+            .lang-modal {
+                max-width: 90%;
+            }
+        }
+
+        /* Anime.js 动画初始状态 - 加大幅度 */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(60px);
+        }
+
+        .animate-fade-in {
+            opacity: 0;
+        }
+
+        .animate-scale-in {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        .animate-slide-left {
+            opacity: 0;
+            transform: translateX(-60px);
+        }
+
+        .animate-slide-right {
+            opacity: 0;
+            transform: translateX(60px);
+        }
+
+        /* 按钮悬停动画增强 */
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        /* 技术卡片悬停效果 - 更大幅度 */
+        .tech-card {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 卡片底部绿色发光效果 */
+        .tech-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            opacity: 0;
+            transform: scaleX(0);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            box-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-color), 0 0 60px var(--accent-color);
+        }
+
+        .tech-card:hover {
+            transform: translateY(-15px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .tech-card:hover::after {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        /* 技术卡片文字动画样式 */
+        .tech-card h3, .tech-card .tech-name {
+            overflow: hidden;
+        }
+
+        .tech-card .char {
+            display: inline-block;
+            will-change: transform, opacity;
+        }
+
+        .tech-card .char-wrapper {
+            display: inline-block;
+            overflow: hidden;
+            vertical-align: bottom;
+        }
+
+        .tech-card .char-inner {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        /* 浏览器标签动画 - 更大幅度 */
+        .browser-item {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
+        }
+
+        .browser-item:hover {
+            transform: scale(1.15) translateY(-5px);
+        }
+
+        /* 控制按钮动画 - 更大幅度 */
+        .lang-select {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
+        }
+
+        .lang-select:hover {
+            transform: scale(1.15) rotate(10deg);
+        }
+
+        .lang-select:active {
+            transform: scale(0.85) rotate(-10deg);
+        }
+
+        /* 代码块发光效果 - 更强烈 */
+        pre {
+            position: relative;
+            transition: box-shadow 0.4s ease, transform 0.3s ease;
+        }
+
+        pre:hover {
+            box-shadow: 0 0 40px rgba(66, 185, 131, 0.5);
+            transform: scale(1.02);
+        }
+
+        /* 代码块包装器 */
+        .code-block-wrapper {
+            background: linear-gradient(145deg, #1e1e2e, #2d2d3d);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .code-block-wrapper:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(66, 185, 131, 0.2), 0 0 30px rgba(66, 185, 131, 0.15);
+        }
+
+        /* 代码块头部 */
+        .code-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 8px;
+            margin-right: 12px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ff5f56; box-shadow: 0 0 6px #ff5f56; }
+        .dot.yellow { background: #ffbd2e; box-shadow: 0 0 6px #ffbd2e; }
+        .dot.green { background: #27c93f; box-shadow: 0 0 6px #27c93f; }
+
+        .code-title {
+            flex: 1;
+            font-size: 13px;
+            color: #6b7280;
+            font-family: 'Consolas', 'Monaco', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .code-copy-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #9ca3af;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .code-copy-btn:hover {
+            background: rgba(66, 185, 131, 0.2);
+            border-color: rgba(66, 185, 131, 0.3);
+            color: var(--accent-color);
+        }
+
+        .code-copy-btn.copied {
+            background: rgba(66, 185, 131, 0.3);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* 代码内容 */
+        .code-content {
+            margin: 0;
+            padding: 20px 24px;
+            background: transparent;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .code-content code {
+            display: block;
+            color: #e4e4e7;
+        }
+
+        .code-comment {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .code-command {
+            color: #ff79c6;
+            font-weight: 600;
+        }
+
+        .code-content .code-command + .code-content code {
+            color: #f8f8f2;
+        }
+
+        /* 链接下划线动画 */
+        a:not(.btn) {
+            position: relative;
+        }
+
+        a:not(.btn)::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        a:not(.btn):hover::after {
+            width: 100%;
+        }
+
+        /* 页脚徽章动画 - 更大幅度 */
+        .protected-badges a {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .protected-badges a:hover {
+            transform: translateY(-5px) scale(1.1);
+        }
+
+        /* Logo 悬浮动画 */
+        .logo {
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        /* 标题发光效果 */
+        h1 {
+            text-shadow: 0 0 0 transparent;
+            transition: text-shadow 0.5s ease;
+        }
+
+        h1:hover {
+            text-shadow: 0 0 30px var(--accent-color), 0 0 60px var(--accent-color);
+        }
+
+        /* 波浪文字效果容器 */
+        .wave-text .char {
+            display: inline-block;
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* 3D 翻转文字效果 */
+        .flip-3d {
+            perspective: 1000px;
+        }
+
+        .flip-3d .char {
+            display: inline-block;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+        }
+
+        .flip-3d:hover .char {
+            animation: flip3d 0.8s ease forwards;
+        }
+
+        @keyframes flip3d {
+            0% { transform: rotateY(0); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        /* 爆炸文字效果 */
+        .explode-text .char {
+            display: inline-block;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .explode-text:hover .char {
+            animation: explode 0.6s ease forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(0, 0) rotate(0); }
+            50% { transform: translate(var(--tx), var(--ty)) rotate(var(--r)); }
+            100% { transform: translate(0, 0) rotate(0); }
+        }
+
+        /* 水平分割文字效果 */
+        .split-text .char {
+            display: inline-block;
+            overflow: hidden;
+        }
+
+        .split-text .char-inner {
+            display: inline-block;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .split-text:hover .char:nth-child(odd) .char-inner {
+            transform: translateX(-10px);
+        }
+
+        .split-text:hover .char:nth-child(even) .char-inner {
+            transform: translateX(10px);
+        }
+
+        /* Raining letters 文字效果 */
+        .raining-text {
+            position: relative;
+        }
+
+        .raining-text .char-wrapper {
+            display: inline-block;
+            overflow: hidden;
+            vertical-align: bottom;
+            position: relative;
+        }
+
+        .raining-text .char {
+            display: inline-block;
+            position: relative;
+        }
+
+        .raining-text .char-clone {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景流动光效 -->
+    <div class="bg-light-effect">
+        <div class="light-orb light-orb-1"></div>
+        <div class="light-orb light-orb-2"></div>
+        <div class="light-orb light-orb-3"></div>
+        <div class="light-orb light-orb-4"></div>
+        <div class="light-orb light-orb-5"></div>
+        <div class="light-orb light-orb-6"></div>
+        <div class="light-orb light-orb-7"></div>
+        <div class="light-orb light-orb-8"></div>
+        <div class="light-line line-1"></div>
+        <div class="light-line line-2"></div>
+        <div class="light-line line-3"></div>
+        <div class="light-particles" id="particles"></div>
+    </div>
+    <!-- 鼠标跟随光效 -->
+    <div class="cursor-glow" id="cursorGlow"></div>
+    <div class="cursor-glow-secondary" id="cursorGlowSecondary"></div>
+
+    <!-- 内容包装器 -->
+    <div class="content-wrapper">
+    <!-- 控制按钮：语言切换 -->
+    <div class="control-buttons">
+        <button class="lang-select" id="langSelect">中</button>
+    </div>
+
+    <!-- 语言选择模态框 -->
+    <div class="lang-modal-mask" id="langModalMask">
+        <div class="lang-modal" id="langModal">
+            <div class="lang-modal-header">
+                <h3 data-i18n="langSelectTitle">选择语言</h3>
+                <button class="lang-modal-close" id="langModalClose">×</button>
+            </div>
+            <div class="lang-modal-options">
+                <div class="lang-option" data-lang="zh-CN">简体中文</div>
+                <div class="lang-option" data-lang="zh-TW">繁體中文</div>
+                <div class="lang-option" data-lang="en">English</div>
+                <div class="lang-option" data-lang="neko">猫娘语言</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 头部/logo/按钮 -->
+    <header>
+        <img src="https://raw.githubusercontent.com/ThinkReally114/Source-UI/main/server.png" alt="Source UI Logo" class="logo animate-scale-in">
+        <h1 data-i18n="title" class="animate-fade-in">Source UI</h1>
+        <p data-i18n="subtitle" class="animate-on-scroll">一个基于 HTML/CSS/JavaScript 的模拟移动操作系统界面</p>
+        <p data-i18n="blur" class="animate-on-scroll">我们拥有 流畅的动画/高性能模糊/精心设计的应用界面</p>
+        <div class="btn-group animate-on-scroll">
+            <a href="https://nebulacn.qzz.io/" target="_blank" class="btn btn-try" data-i18n="tryNow">现在试试</a>
+            <a href="https://github.com/ThinkReally114/Source-UI" target="_blank" class="btn btn-github" data-i18n="githubRepo">GitHub 仓库</a>
+            <a href="#" target="_blank" class="btn btn-bilibili" data-i18n="bilibili">📺 Bilibili</a>
+        </div>
+        <div class="tag-group animate-on-scroll">
+            <span data-i18n="mitLicense">MIT 许可证</span>
+            <span data-i18n="nativeFrontend">原生前端开发</span>
+            <span data-i18n="multiBrowser">多浏览器兼容</span>
+        </div>
+    </header>
+    <!-- 项目简介 -->
+    <section>
+        <h2 data-i18n="projectIntro" class="animate-on-scroll">项目简介</h2>
+        <p data-i18n="projectDesc" class="animate-on-scroll">Source UI 是一款轻量无框架依赖的模拟移动操作系统界面，基于原生HTML5、CSS3、JavaScript开发，通过CSS变量、弹性布局、网格布局实现样式适配，结合CSS过渡与动画还原移动系统的视觉和交互体验，支持本地快速部署，多浏览器可运行</p>
+    </section>
+    <!-- 核心技术栈 -->
+    <section>
+        <h2 data-i18n="techStack" class="animate-on-scroll">核心技术栈</h2>
+        <div class="tech-stack">
+            <div class="tech-card animate-on-scroll">
+                <h3><span data-i18n="frontendTitle">前端基础</span></h3>
+                <div class="tech-name" data-i18n="frontendName">HTML5 / CSS3 / 原生 JavaScript</div>
+                <div class="tech-desc" data-i18n="frontendDesc">基于纯原生前端技术开发，无任何第三方框架依赖，轻量高效，降低项目耦合性与部署成本，同时保证界面的基础结构、样式渲染和交互逻辑的原生兼容性</div>
+            </div>
+            <div class="tech-card animate-on-scroll">
+                <h3><span data-i18n="styleTitle">样式布局</span></h3>
+                <div class="tech-name" data-i18n="styleName">CSS Variables / Flexbox / Grid</div>
+                <div class="tech-desc" data-i18n="styleDesc">通过CSS变量实现样式统一管理与动态切换，结合弹性布局Flexbox和网格布局Grid，完成页面的自适应适配，兼顾移动端与桌面端的布局一致性，提升样式开发效率</div>
+            </div>
+            <div class="tech-card animate-on-scroll">
+                <h3><span data-i18n="animationTitle">交互动画</span></h3>
+                <div class="tech-name" data-i18n="animationName">CSS Transitions / CSS Animations</div>
+                <div class="tech-desc" data-i18n="animationDesc">纯CSS实现所有交互动画效果，替代JavaScript动画，减少脚本开销，让界面切换、元素动效更流畅，精准还原移动操作系统的原生视觉交互体验</div>
+            </div>
+            <div class="tech-card animate-on-scroll">
+                <h3><span data-i18n="iconTitle">图标资源</span></h3>
+                <div class="tech-name" data-i18n="iconName">SVG 矢量图标</div>
+                <div class="tech-desc" data-i18n="iconDesc">采用SVG矢量图标作为项目图标资源，支持无限缩放不失真，适配不同分辨率的设备屏幕，同时体积更小，加载速度更快，提升页面整体性能</div>
+            </div>
+        </div>
+    </section>
+    <!-- 本地运行 -->
+    <section>
+        <h2 data-i18n="localRun" class="animate-on-scroll">本地快速运行</h2>
+        <p data-i18n="localRunDesc" class="animate-on-scroll">克隆仓库后，可直接浏览器打开文件，或通过本地服务器启动，步骤如下：</p>
+        <div class="code-block-wrapper animate-on-scroll">
+            <div class="code-header">
+                <div class="code-dots">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                </div>
+                <span class="code-title">terminal</span>
+                <button class="code-copy-btn" onclick="copyCode(this)" title="复制代码">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span class="copy-text">复制</span>
+                </button>
+            </div>
+            <pre class="code-content"><code><span class="code-comment"># 克隆仓库</span>
+<span class="code-command">git clone</span> https://github.com/ThinkReally114/Source-UI.git
+
+<span class="code-comment"># 进入目录</span>
+<span class="code-command">cd</span> Source-UI
+
+<span class="code-comment"># 打开文件（任选其一）</span>
+<span class="code-comment"># 方式1: 直接用浏览器打开</span>
+<span class="code-command">open</span> index.html
+
+<span class="code-comment"># 方式2: 使用本地服务器</span>
+<span class="code-command">npx serve</span> .
+<span class="code-comment"># 或</span>
+<span class="code-command">python -m http.server</span> 8080</code></pre>
+        </div>
+    </section>
+    <!-- 浏览器支持 -->
+    <section>
+        <h2 data-i18n="browserSupport" class="animate-on-scroll">浏览器支持</h2>
+        <div class="browser-list animate-on-scroll">
+            <div class="browser-item" data-i18n="chromeEdge">Chrome / Edge / Via (推荐)</div>
+            <div class="browser-item">Safari</div>
+            <div class="browser-item">Firefox</div>
+        </div>
+    </section>
+    <!-- 贡献与鸣谢 -->
+    <section>
+        <h2 data-i18n="contribution" class="animate-on-scroll">贡献与鸣谢</h2>
+        <p data-i18n="contributionDesc" class="animate-on-scroll">欢迎向项目提交 <a href="https://github.com/ThinkReally114/Source-UI/issues" target="_blank">Issue</a> 和 <a href="https://github.com/ThinkReally114/Source-UI/pulls" target="_blank">Pull Request</a>，一起完善Source UI！</p>
+        <p data-i18n="specialThanks" class="animate-on-scroll">特别鸣谢：<a href="https://github.com/ERX399" target="_blank">夏(ERX399)</a></p>
+    </section>
+    <!-- 许可证 -->
+    <section>
+        <h2 data-i18n="license" class="animate-on-scroll">许可证</h2>
+        <p data-i18n="licenseDesc" class="animate-on-scroll">本项目基于 <a href="https://github.com/ThinkReally114/Source-UI/blob/main/LICENSE" target="_blank">MIT License</a> 开源 © 2026 ThinkReally</p>
+    </section>
+    <!-- 页脚 -->
+    <footer>
+        <p data-i18n="starSupport" class="animate-on-scroll">⭐ 如果这个项目对你帮助，欢迎前往GitHub给个 Star 支持一下！</p>
+        <!-- 缩小+压暗后的版权文字 -->
+        <p class="copyright-text animate-on-scroll" data-i18n="copyright">© 2026 Source UI | 由 ThinkReally 开发</p>
+        <!-- 标识区 -->
+        <div class="protected-badges animate-on-scroll">
+            <a href="https://github.com/ThinkReally114/Source-UI" target="_blank">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                <span data-i18n="poweredBy">代码托管于</span> GitHub
+            </a>
+            <!-- Cloudflare纯文字，无SVG图标 -->
+            <a href="https://www.cloudflare.com/" target="_blank">
+                <span data-i18n="protectedBy">网站防护由</span> Cloudflare 提供
+            </a>
+        </div>
+    </footer>
+
+    <script>
+        // 1. 多语言配置（含猫娘版全字段）
+        const langData = {
+            'zh-CN': {
+                langSelectTitle: '选择语言',
+                title: 'Source UI',
+                subtitle: '一个基于 HTML/CSS/JavaScript 的模拟移动操作系统界面',
+                blur: '我们拥有 流畅的动画/高性能模糊/精心设计的应用界面',
+                tryNow: '现在试试',
+                githubRepo: 'GitHub 仓库',
+                bilibili: '📺 Bilibili',
+                mitLicense: 'MIT 许可证',
+                nativeFrontend: '原生前端开发',
+                multiBrowser: '多浏览器兼容',
+                projectIntro: '项目简介',
+                projectDesc: 'Source UI 是一款轻量无框架依赖的模拟移动操作系统界面，基于原生HTML5、CSS3、JavaScript开发，通过CSS变量、弹性布局、网格布局实现样式适配，结合CSS过渡与动画还原移动系统的视觉和交互体验，支持本地快速部署，多浏览器可运行',
+                techStack: '核心技术栈',
+                frontendTitle: '前端基础',
+                frontendName: 'HTML5 / CSS3 / 原生 JavaScript',
+                frontendDesc: '基于纯原生前端技术开发，无任何第三方框架依赖，轻量高效，降低项目耦合性与部署成本，同时保证界面的基础结构、样式渲染和交互逻辑的原生兼容性',
+                styleTitle: '样式布局',
+                styleName: 'CSS Variables / Flexbox / Grid',
+                styleDesc: '通过CSS变量实现样式统一管理与动态切换，结合弹性布局Flexbox和网格布局Grid，完成页面的自适应适配，兼顾移动端与桌面端的布局一致性，提升样式开发效率',
+                animationTitle: '交互动画',
+                animationName: 'CSS Transitions / CSS Animations',
+                animationDesc: '纯CSS实现所有交互动画效果，替代JavaScript动画，减少脚本开销，让界面切换、元素动效更流畅，精准还原移动操作系统的原生视觉交互体验',
+                iconTitle: '图标资源',
+                iconName: 'SVG 矢量图标',
+                iconDesc: '采用SVG矢量图标作为项目图标资源，支持无限缩放不失真，适配不同分辨率的设备屏幕，同时体积更小，加载速度更快，提升页面整体性能',
+                localRun: '本地快速运行',
+                localRunDesc: '克隆仓库后，可直接浏览器打开文件，或通过本地服务器启动，步骤如下：',
+                browserSupport: '浏览器支持',
+                chromeEdge: 'Chrome / Edge / Via (推荐)',
+                contribution: '贡献与鸣谢',
+                contributionDesc: '欢迎向项目提交 <a href="https://github.com/ThinkReally114/Source-UI/issues" target="_blank">Issue</a> 和 <a href="https://github.com/ThinkReally114/Source-UI/pulls" target="_blank">Pull Request</a>，一起完善Source UI！',
+                specialThanks: '特别鸣谢：<a href="https://github.com/ERX399" target="_blank">夏(ERX399)</a>',
+                license: '许可证',
+                licenseDesc: '本项目基于 <a href="https://github.com/ThinkReally114/Source-UI/blob/main/LICENSE" target="_blank">MIT License</a> 开源 © 2026 ThinkReally',
+                starSupport: '⭐ 如果这个项目对你有帮助，欢迎前往GitHub给个 Star 支持一下！',
+                copyright: '© 2026 Source UI | 由 ThinkReally 开发',
+                poweredBy: '代码托管于',
+                protectedBy: '网站防护由'
+            },
+            'zh-TW': {
+                langSelectTitle: '選擇語言',
+                title: 'Source UI',
+                subtitle: '一個基於 HTML/CSS/JavaScript 的模擬行動作業系統介面',
+                blur: '我們擁有 流暢的動畫/高性能模糊/精心設計的應用界面',
+                tryNow: '立即體驗',
+                githubRepo: 'GitHub 倉庫',
+                bilibili: '📺 Bilibili',
+                mitLicense: 'MIT 授權合約',
+                nativeFrontend: '原生前端開發',
+                multiBrowser: '多瀏覽器相容',
+                projectIntro: '專案簡介',
+                projectDesc: 'Source UI 是一款輕量無框架依賴的模擬行動作業系統介面，基於原生HTML5、CSS3、JavaScript開發，透過CSS變數、彈性配置、網格配置實現樣式適配，結合CSS過渡與動畫還原行動系統的視覺和交互體驗，支援本地快速部署，多瀏覽器可執行',
+                techStack: '核心技術棧',
+                frontendTitle: '前端基礎',
+                frontendName: 'HTML5 / CSS3 / 原生 JavaScript',
+                frontendDesc: '基於純原生前端技術開發，無任何第三方框架依賴，輕量高效，降低專案耦合性與部署成本，同時確保介面的基礎結構、樣式渲染和交互邏輯的原生相容性',
+                styleTitle: '樣式布局',
+                styleName: 'CSS Variables / Flexbox / Grid',
+                styleDesc: '透過CSS變數實現樣式統一管理與動態切換，結合彈性布局Flexbox和網格布局Grid，完成頁面的自適應適配，兼顧行動端與桌面端的布局一致性，提升樣式開發效率',
+                animationTitle: '交互动畫',
+                animationName: 'CSS Transitions / CSS Animations',
+                animationDesc: '純CSS實現所有交互动畫效果，替代JavaScript動畫，減少腳本開銷，讓介面切換、元素動效更流暢，精準還原行動作業系統的原生視覺交互體驗',
+                iconTitle: '圖標資源',
+                iconName: 'SVG 矢量圖標',
+                iconDesc: '採用SVG矢量圖標做為專案圖標資源，支援無限縮放不失真，適配不同解析度的設備螢幕，同時體積更小，加載速度更快，提升頁面整體效能',
+                localRun: '本地快速執行',
+                localRunDesc: '複製倉庫後，可直接用瀏覽器開啟檔案，或透過本地伺服器啟動，步驟如下：',
+                browserSupport: '瀏覽器支援',
+                chromeEdge: 'Chrome / Edge / Via (建議)',
+                contribution: '貢獻與致謝',
+                contributionDesc: '歡迎向專案提交 <a href="https://github.com/ThinkReally114/Source-UI/issues" target="_blank">Issue</a> 和 <a href="https://github.com/ThinkReally114/Source-UI/pulls" target="_blank">Pull Request</a>，一起完善Source UI！',
+                specialThanks: '特別致謝：<a href="https://github.com/ERX399" target="_blank">夏(ERX399)</a>',
+                license: '授權合約',
+                licenseDesc: '本專案基於 <a href="https://github.com/ThinkReally114/Source-UI/blob/main/LICENSE" target="_blank">MIT License</a> 開源 © 2026 ThinkReally',
+                starSupport: '⭐ 如果這個專案對你有幫助，歡迎前往GitHub給個 Star 支持一下！',
+                copyright: '© 2026 Source UI | 由 ThinkReally 開發',
+                poweredBy: '程式碼託管於',
+                protectedBy: '網站防護由'
+            },
+            'en': {
+                langSelectTitle: 'Select Language',
+                title: 'Source UI',
+                subtitle: 'A simulated mobile OS interface based on HTML/CSS/JavaScript',
+                blur: 'We have smooth animations / high-performance blurring / a thoughtfully designed app interface.',
+                tryNow: 'Try Now',
+                githubRepo: 'GitHub Repo',
+                bilibili: '📺 Bilibili',
+                mitLicense: 'MIT License',
+                nativeFrontend: 'Native Frontend Development',
+                multiBrowser: 'Multi-browser Compatible',
+                projectIntro: 'Project Introduction',
+                projectDesc: 'Source UI is a lightweight simulated mobile OS interface without framework dependencies, developed based on native HTML5, CSS3 and JavaScript. It realizes style adaptation through CSS variables, Flexbox and Grid, restores the visual and interactive experience of mobile systems with CSS Transitions and Animations, supports rapid local deployment and runs on multiple browsers.',
+                techStack: 'Core Tech Stack',
+                frontendTitle: 'Frontend Foundation',
+                frontendName: 'HTML5 / CSS3 / Native JavaScript',
+                frontendDesc: 'Developed based on pure native frontend technologies without any third-party framework dependencies, it is lightweight and efficient, reducing project coupling and deployment costs while ensuring native compatibility of the interface\'s basic structure, style rendering and interactive logic.',
+                styleTitle: 'Style & Layout',
+                styleName: 'CSS Variables / Flexbox / Grid',
+                styleDesc: 'Realize unified style management and dynamic switching through CSS variables, and complete adaptive page layout with Flexbox and Grid, ensuring layout consistency between mobile and desktop ends and improving style development efficiency.',
+                animationTitle: 'Interactive Animation',
+                animationName: 'CSS Transitions / CSS Animations',
+                animationDesc: 'All interactive animation effects are implemented by pure CSS instead of JavaScript animation, reducing script overhead, making interface switching and element effects smoother, and accurately restoring the native visual interactive experience of mobile OS.',
+                iconTitle: 'Icon Resources',
+                iconName: 'SVG Vector Icons',
+                iconDesc: 'Use SVG vector icons as project icon resources, supporting infinite scaling without distortion, adapting to device screens of different resolutions, and with smaller size and faster loading speed to improve overall page performance.',
+                localRun: 'Run Locally',
+                localRunDesc: 'After cloning the repository, you can open the file directly in the browser or start it through a local server with the following steps:',
+                browserSupport: 'Browser Support',
+                chromeEdge: 'Chrome / Edge / Via (Recommended)',
+                contribution: 'Contribution & Acknowledgments',
+                contributionDesc: 'Welcome to submit <a href="https://github.com/ThinkReally114/Source-UI/issues" target="_blank">Issue</a> and <a href="https://github.com/ThinkReally114/Source-UI/pulls" target="_blank">Pull Request</a> to improve Source UI together!',
+                specialThanks: 'Special Thanks: <a href="https://github.com/ERX399" target="_blank">Xia(ERX399)</a>',
+                license: 'License',
+                licenseDesc: 'This project is open source under the <a href="https://github.com/ThinkReally114/Source-UI/blob/main/LICENSE" target="_blank">MIT License</a> © 2026 ThinkReally',
+                starSupport: '⭐ If this project helps you, please give it a Star on GitHub!',
+                copyright: '© 2026 Source UI | Developed by ThinkReally',
+                poweredBy: 'Code hosted on',
+                protectedBy: 'Site protected by'
+            },
+            // 猫娘版语言包
+            'neko': {
+                langSelectTitle: '要换什么语言喵？',
+                title: 'Source UI',
+                subtitle: '人家是基于原生 HTML/CSS/JS 开发的模拟手机界面喵',
+                blur: '这里有流畅的动画和高性能模糊效果喵',
+                tryNow: '快来试试喵！',
+                githubRepo: 'GitHub 仓库喵',
+                bilibili: '📺 Bilibili 喵',
+                mitLicense: 'MIT 许可证喵',
+                nativeFrontend: '原生前端开发喵',
+                multiBrowser: '多浏览器兼容喵',
+                projectIntro: '项目介绍喵',
+                projectDesc: 'Source UI 是超轻量的模拟手机界面，用原生技术编写，动画丝滑且适配全平台，本地就能运行喵',
+                techStack: '核心技术喵',
+                frontendTitle: '前端基础喵',
+                frontendName: 'HTML5 / CSS3 / 原生 JS',
+                frontendDesc: '纯原生开发，不依赖框架，轻量且运行快速喵',
+                styleTitle: '样式布局喵',
+                styleName: 'CSS 变量 / Flex / Grid',
+                styleDesc: '支持深色模式和响应式布局，完美适配各种屏幕喵',
+                animationTitle: '交互动画喵',
+                animationName: 'CSS 动画',
+                animationDesc: '纯 CSS 动画，流畅不卡顿，还原原生操作手感喵',
+                iconTitle: '图标资源喵',
+                iconName: 'SVG 矢量图',
+                iconDesc: '高清矢量图标，加载快且不失真喵',
+                localRun: '本地运行喵',
+                localRunDesc: '克隆后直接打开文件就能用，非常简单喵',
+                browserSupport: '浏览器支持喵',
+                chromeEdge: 'Chrome / Edge / Via (推荐喵)',
+                contribution: '贡献与感谢喵',
+                contributionDesc: '欢迎提交 Issue 或 PR，和人家一起完善项目喵',
+                specialThanks: '鸣谢：<a href="https://github.com/ERX399" target="_blank">夏(ERX399)</a> 喵',
+                license: '许可证喵',
+                licenseDesc: '基于 MIT 协议开源 © 2026 ThinkReally 喵',
+                starSupport: '⭐ 喜欢的话请给人家点个 Star 喵！',
+
+
+                copyright: '© 2026 Source UI | 由 ThinkReally 酱精心打造喵~',
+                protectedBy: '网站防护由'
+            }
+        };
+        const LANG_STORAGE_KEY = 'source_ui_lang';
+        const langSelect = document.getElementById('langSelect');
+        const langModalMask = document.getElementById('langModalMask');
+        const langModalClose = document.getElementById('langModalClose');
+        const langOptions = document.querySelectorAll('.lang-option');
+        let currentLang = 'zh-CN';
+
+        // 渲染多语言
+        function renderLang(lang) {
+            const data = langData[lang];
+            if (!data) return;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (data[key]) {
+                    el.innerHTML = data[key];
+                }
+            });
+            document.documentElement.lang = lang;
+            // 更新语言按钮文字（使用 textContent 会移除子元素，改用 innerHTML 或只更新内容）
+            const langText = lang === 'zh-CN' ? '中' : 
+                            lang === 'zh-TW' ? '繁' : 
+                            lang === 'en' ? 'En' : 
+                            lang === 'neko' ? '喵' : '中';
+            // 只更新文本节点，不替换整个元素
+            if (langSelect.firstChild) {
+                langSelect.firstChild.textContent = langText;
+            } else {
+                langSelect.textContent = langText;
+            }
+            // 高亮当前选中的语言
+            langOptions.forEach(option => {
+                if (option.getAttribute('data-lang') === lang) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+            // 保存到本地存储
+            localStorage.setItem(LANG_STORAGE_KEY, lang);
+            currentLang = lang;
+        }
+
+        // 打开语言模态框
+        function openLangModal() {
+            langModalMask.classList.add('show');
+            document.body.classList.add('modal-open');
+        }
+
+        // 关闭语言模态框（等待动画完成）
+        function closeLangModal() {
+            langModalMask.classList.remove('show');
+            // 等待动画播放完成后解除body滚动锁定
+            setTimeout(() => {
+                document.body.classList.remove('modal-open');
+            }, 350);
+        }
+
+        // 事件绑定
+        // 语言模态框事件
+        langSelect.addEventListener('click', () => openLangModalAnime());
+        langModalClose.addEventListener('click', () => closeLangModalAnime());
+        // ESC键关闭模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && langModalMask.classList.contains('show')) {
+                closeLangModalAnime();
+            }
+        });
+        // 语言选项点击事件
+        langOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const targetLang = option.getAttribute('data-lang');
+                renderLang(targetLang);
+                closeLangModalAnime();
+            });
+        });
+
+        // 页面初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            // 初始化语言
+            const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+            if (savedLang && langData[savedLang]) renderLang(savedLang);
+            else renderLang('zh-CN');
+            // 初始化 Anime.js 动画
+            initAnimations();
+        });
+
+        // ==================== Anime.js 动画 ====================
+        function initAnimations() {
+            // 1. Logo 缩放进入动画 - 更大幅度
+            anime({
+                targets: '.logo.animate-scale-in',
+                scale: [0.3, 1],
+                opacity: [0, 1],
+                rotate: [-15, 0],
+                duration: 1200,
+                easing: 'easeOutElastic(1, .5)',
+                delay: 200
+            });
+
+            // 2. 标题淡入动画 - 更大幅度
+            anime({
+                targets: 'h1.animate-fade-in',
+                opacity: [0, 1],
+                translateY: [-60, 0],
+                scale: [0.8, 1],
+                duration: 800,
+                easing: 'easeOutBack',
+                delay: 400
+            });
+
+            // 3. 控制按钮从上方滑入 - 更大幅度
+            anime({
+                targets: '.control-buttons',
+                translateY: [-100, 0],
+                opacity: [0, 1],
+                rotate: [20, 0],
+                duration: 800,
+                easing: 'easeOutBack',
+                delay: 100
+            });
+
+            // 4. 滚动触发动画 - 更大幅度
+            const scrollElements = document.querySelectorAll('.animate-on-scroll');
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const scrollObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        anime({
+                            targets: entry.target,
+                            translateY: [80, 0],
+                            opacity: [0, 1],
+                            scale: [0.9, 1],
+                            duration: 800,
+                            easing: 'easeOutBack'
+                        });
+                        scrollObserver.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            scrollElements.forEach(el => scrollObserver.observe(el));
+
+            // 5. 技术卡片交错动画 - 更大幅度
+            anime({
+                targets: '.tech-card',
+                translateY: [100, 0],
+                opacity: [0, 1],
+                rotateX: [15, 0],
+                delay: anime.stagger(150, {start: 500}),
+                duration: 900,
+                easing: 'easeOutBack'
+            });
+
+            // 6. 按钮组交错动画 - 更大幅度
+            anime({
+                targets: '.btn-group .btn',
+                translateY: [40, 0],
+                opacity: [0, 1],
+                scale: [0.5, 1],
+                rotate: [10, 0],
+                delay: anime.stagger(120, {start: 600}),
+                duration: 700,
+                easing: 'easeOutElastic(1, .6)'
+            });
+
+            // 7. 标签组动画 - 更大幅度
+            anime({
+                targets: '.tag-group span',
+                translateY: [30, 0],
+                opacity: [0, 1],
+                scale: [0.5, 1],
+                delay: anime.stagger(100, {start: 900}),
+                duration: 600,
+                easing: 'easeOutBack'
+            });
+
+            // 8. 浏览器标签动画 - 更大幅度
+            anime({
+                targets: '.browser-item',
+                scale: [0, 1],
+                opacity: [0, 1],
+                rotate: [180, 0],
+                delay: anime.stagger(120, {start: 800}),
+                duration: 700,
+                easing: 'easeOutBack'
+            });
+
+            // 9. 页脚动画 - 更大幅度
+            anime({
+                targets: 'footer p, .protected-badges a',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(120, {start: 1000}),
+                duration: 700,
+                easing: 'easeOutBack'
+            });
+
+            // 10. 初始化卡片文字拆分动画
+            initCardTextAnimations();
+        }
+
+        // 文字拆分动画初始化 - Raining letters 专用
+        function initCardTextAnimations() {
+            // 为 raining-text 元素拆分文字
+            document.querySelectorAll('.raining-text').forEach(el => {
+                const text = el.textContent;
+                el.innerHTML = '';
+                
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    if (char === ' ') {
+                        el.innerHTML += ' ';
+                    } else {
+                        // 创建字符包装器
+                        const wrapper = document.createElement('span');
+                        wrapper.className = 'char-wrapper';
+                        
+                        // 原字符（初始可见）
+                        const charSpan = document.createElement('span');
+                        charSpan.className = 'char';
+                        charSpan.textContent = char;
+                        
+                        // 克隆字符（用于动画过渡）
+                        const cloneSpan = document.createElement('span');
+                        cloneSpan.className = 'char-clone';
+                        cloneSpan.textContent = char;
+                        
+                        wrapper.appendChild(charSpan);
+                        wrapper.appendChild(cloneSpan);
+                        el.appendChild(wrapper);
+                    }
+                }
+            });
+
+            // 为卡片添加鼠标进入/离开动画 - Raining letters 效果
+            document.querySelectorAll('.tech-card').forEach(card => {
+                const effect = card.getAttribute('data-text-effect');
+                
+                if (effect === 'raining') {
+                    card.addEventListener('mouseenter', () => {
+                        animateRainingLetters(card, true);
+                    });
+                    
+                    card.addEventListener('mouseleave', () => {
+                        animateRainingLetters(card, false);
+                    });
+                }
+            });
+        }
+
+        // Raining letters 动画效果 - 参考示例实现
+        function animateRainingLetters(card, isEnter) {
+            const charWrappers = card.querySelectorAll('.char-wrapper');
+            
+            if (charWrappers.length === 0) return;
+
+            // 随机排序字符索引
+            const indices = Array.from({length: charWrappers.length}, (_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+
+            if (isEnter) {
+                // 鼠标进入：字符从上方掉落（rain down）
+                indices.forEach((idx, i) => {
+                    const wrapper = charWrappers[idx];
+                    const char = wrapper.querySelector('.char');
+                    const clone = wrapper.querySelector('.char-clone');
+                    
+                    // 先设置初始状态
+                    anime.set(char, { y: '-100%', opacity: 0 });
+                    anime.set(clone, { y: '0%', opacity: 1 });
+                    
+                    // 动画：原字符从上方落下
+                    anime({
+                        targets: char,
+                        y: ['-100%', '0%'],
+                        opacity: [0, 1],
+                        duration: 600,
+                        delay: i * 30,
+                        easing: 'spring(1, 80, 10, 0)' // 弹簧物理效果
+                    });
+                    
+                    // 克隆字符向下消失
+                    anime({
+                        targets: clone,
+                        y: ['0%', '100%'],
+                        opacity: [1, 0],
+                        duration: 600,
+                        delay: i * 30,
+                        easing: 'spring(1, 80, 10, 0)'
+                    });
+                });
+            } else {
+                // 鼠标离开：字符回到原位
+                indices.forEach((idx, i) => {
+                    const wrapper = charWrappers[idx];
+                    const char = wrapper.querySelector('.char');
+                    const clone = wrapper.querySelector('.char-clone');
+                    
+                    // 原字符向上消失
+                    anime({
+                        targets: char,
+                        y: ['0%', '-100%'],
+                        opacity: [1, 0],
+                        duration: 400,
+                        delay: i * 20,
+                        easing: 'easeInOutQuad'
+                    });
+                    
+                    // 克隆字符从下方出现
+                    anime({
+                        targets: clone,
+                        y: ['100%', '0%'],
+                        opacity: [0, 1],
+                        duration: 400,
+                        delay: i * 20,
+                        easing: 'easeInOutQuad'
+                    });
+                });
+            }
+        }
+
+        // 11. 语言模态框动画 - 更大幅度
+        let isModalAnimating = false;
+
+        function openLangModalAnime() {
+            if (isModalAnimating || langModalMask.classList.contains('show')) return;
+            isModalAnimating = true;
+
+            langModalMask.classList.add('show');
+            document.body.classList.add('modal-open');
+
+            // 遮罩淡入
+            anime({
+                targets: '#langModalMask',
+                opacity: [0, 1],
+                backdropFilter: ['blur(0px)', 'blur(14px)'],
+                duration: 400,
+                easing: 'easeOutQuad'
+            });
+
+            // 模态框缩放弹出 - 更大幅度
+            anime({
+                targets: '#langModal',
+                scale: [0.5, 1.1, 1],
+                opacity: [0, 1],
+                rotateX: [15, 0],
+                duration: 600,
+                easing: 'easeOutBack',
+                complete: () => {
+                    isModalAnimating = false;
+                }
+            });
+
+            // 语言选项交错进入 - 更大幅度
+            anime({
+                targets: '.lang-option',
+                translateX: [-100, 0],
+                opacity: [0, 1],
+                rotate: [10, 0],
+                delay: anime.stagger(100, {start: 200}),
+                duration: 500,
+                easing: 'easeOutBack'
+            });
+        }
+
+        function closeLangModalAnime() {
+            if (isModalAnimating || !langModalMask.classList.contains('show')) return;
+            isModalAnimating = true;
+
+            // 模态框缩放消失 - 更大幅度
+            anime({
+                targets: '#langModal',
+                scale: [1, 0.5],
+                opacity: [1, 0],
+                rotateX: [0, -15],
+                duration: 400,
+                easing: 'easeInBack',
+                complete: () => {
+                    langModalMask.classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                    isModalAnimating = false;
+                }
+            });
+
+            // 遮罩淡出
+            anime({
+                targets: '#langModalMask',
+                opacity: [1, 0],
+                backdropFilter: ['blur(14px)', 'blur(0px)'],
+                duration: 400,
+                easing: 'easeInQuad'
+            });
+        }
+
+        // 13. 按钮点击波纹效果 - 更大幅度
+        document.querySelectorAll('.btn, .lang-select').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const ripple = document.createElement('span');
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.5);
+                    width: 20px;
+                    height: 20px;
+                    left: ${x}px;
+                    top: ${y}px;
+                    pointer-events: none;
+                    transform: translate(-50%, -50%);
+                `;
+                this.appendChild(ripple);
+
+                anime({
+                    targets: ripple,
+                    scale: [0, 40],
+                    opacity: [1, 0],
+                    duration: 800,
+                    easing: 'easeOutCirc',
+                    complete: () => ripple.remove()
+                });
+
+                // 按钮点击缩放反馈
+                anime({
+                    targets: this,
+                    scale: [1, 0.9, 1.05, 1],
+                    duration: 400,
+                    easing: 'easeOutBack'
+                });
+            });
+        });
+
+        // 14. 链接悬停动画增强 - 更大幅度
+        document.querySelectorAll('a:not(.btn)').forEach(link => {
+            link.addEventListener('mouseenter', function() {
+                anime({
+                    targets: this,
+                    translateY: -5,
+                    scale: 1.05,
+                    duration: 300,
+                    easing: 'easeOutBack'
+                });
+            });
+
+            link.addEventListener('mouseleave', function() {
+                anime({
+                    targets: this,
+                    translateY: 0,
+                    scale: 1,
+                    duration: 300,
+                    easing: 'easeOutBack'
+                });
+            });
+        });
+
+        // 14. 代码块打字机效果
+        function typeWriterEffect() {
+            const codeBlock = document.querySelector('pre');
+            if (!codeBlock) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        anime({
+                            targets: codeBlock,
+                            boxShadow: [
+                                '0 0 0 rgba(66, 185, 131, 0)',
+                                '0 0 20px rgba(66, 185, 131, 0.3)',
+                                '0 0 0 rgba(66, 185, 131, 0)'
+                            ],
+                            duration: 1500,
+                            easing: 'easeInOutQuad',
+                            loop: 2
+                        });
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            observer.observe(codeBlock);
+        }
+
+        // 页面加载完成后启动打字机效果
+        window.addEventListener('load', typeWriterEffect);
+
+        // ==================== 代码复制功能 ====================
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-block-wrapper').querySelector('.code-content');
+            const codeText = codeBlock.innerText;
+
+            navigator.clipboard.writeText(codeText).then(() => {
+                const originalText = btn.querySelector('.copy-text').textContent;
+                btn.querySelector('.copy-text').textContent = '已复制!';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.querySelector('.copy-text').textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = codeText;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                const originalText = btn.querySelector('.copy-text').textContent;
+                btn.querySelector('.copy-text').textContent = '已复制!';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.querySelector('.copy-text').textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // ==================== 背景流动光效交互 ====================
+        const cursorGlow = document.getElementById('cursorGlow');
+        const cursorGlowSecondary = document.getElementById('cursorGlowSecondary');
+        const particlesContainer = document.getElementById('particles');
+        let mouseX = 0, mouseY = 0;
+        let glowX = 0, glowY = 0;
+        let glowX2 = 0, glowY2 = 0;
+        let isMouseMoving = false;
+        let mouseTimeout;
+
+        // 创建粒子
+        function createParticles() {
+            const particleCount = 30;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (8 + Math.random() * 12) + 's';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.width = (2 + Math.random() * 4) + 'px';
+                particle.style.height = particle.style.width;
+                
+                // 随机颜色
+                const colors = ['var(--accent-color)', 'var(--bili-color)', '#6b8dd6', '#a78bfa', '#f472b6'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.boxShadow = `0 0 ${6 + Math.random() * 6}px ${particle.style.background}`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 初始化粒子
+        createParticles();
+
+        // 鼠标移动事件
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            isMouseMoving = true;
+
+            // 清除之前的超时
+            clearTimeout(mouseTimeout);
+
+            // 设置新的超时，鼠标停止移动后逐渐停止跟随
+            mouseTimeout = setTimeout(() => {
+                isMouseMoving = false;
+            }, 100);
+        });
+
+        // 平滑跟随动画
+        function animateCursorGlow() {
+            if (isMouseMoving) {
+                // 主光效跟随鼠标
+                glowX += (mouseX - glowX) * 0.1;
+                glowY += (mouseY - glowY) * 0.1;
+                cursorGlow.style.left = glowX + 'px';
+                cursorGlow.style.top = glowY + 'px';
+
+                // 次要光效延迟跟随（拖尾效果）
+                glowX2 += (mouseX - glowX2) * 0.05;
+                glowY2 += (mouseY - glowY2) * 0.05;
+                cursorGlowSecondary.style.left = glowX2 + 'px';
+                cursorGlowSecondary.style.top = glowY2 + 'px';
+            }
+
+            requestAnimationFrame(animateCursorGlow);
+        }
+
+        // 启动跟随动画
+        animateCursorGlow();
+
+        // 鼠标进入页面时显示光效
+        document.addEventListener('mouseenter', () => {
+            cursorGlow.style.opacity = '1';
+        });
+
+        // 鼠标离开页面时隐藏光效
+        document.addEventListener('mouseleave', () => {
+            cursorGlow.style.opacity = '0';
+        });
+
+        // 点击时产生光波扩散效果
+        document.addEventListener('click', (e) => {
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+                position: fixed;
+                left: ${e.clientX}px;
+                top: ${e.clientY}px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(66, 185, 131, 0.6) 0%, transparent 70%);
+                pointer-events: none;
+                z-index: 2;
+                transform: translate(-50%, -50%);
+            `;
+            document.body.appendChild(ripple);
+
+            anime({
+                targets: ripple,
+                scale: [1, 15],
+                opacity: [0.8, 0],
+                duration: 800,
+                easing: 'easeOutCirc',
+                complete: () => ripple.remove()
+            });
+        });
+    </script>
+    </div><!-- content-wrapper 结束 -->
+</body>
+</html>
