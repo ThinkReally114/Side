@@ -1,0 +1,2761 @@
+<!doctype html>
+<html>
+
+<head>
+    <!-- 设置字符编码为UTF-8，支持中文显示 -->
+    <meta charset="UTF-8">
+    <!-- 视口设置：禁止缩放，适配移动端 -->
+    <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <!-- 网站图标 -->
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/ThinkReally114/Source-UI/main/server.png" type="image/x-icon">
+    <!-- 页面标题 -->
+    <title>Source-UI</title>
+    <style>
+        /* ========== 基础布局样式 ========== */
+        
+        /* html和body占满全屏，黑色背景作为黑边 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000; /* 黑色背景，超出内容区域显示黑边 */
+            display: flex; /* 使用flex布局使内容居中 */
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            overflow: hidden; /* 隐藏溢出内容 */
+        }
+
+        /* 主容器：固定尺寸302x594，圆角显示 */
+        #container {
+            width: 302px; /* 固定宽度 */
+            height: 594px; /* 固定高度 */
+            position: relative; /* 相对定位，作为子元素的定位参考 */
+            overflow: hidden; /* 隐藏溢出内容 */
+            border-radius: 40px; /* 圆角效果 */
+            user-select: none; /* 禁用文本选中 */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* 壁纸层 - 独立缩放 */
+        #wallpaper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("https://imgapi.siiway.top/image/v");
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.25, 1);
+            z-index: 0;
+        }
+
+        #wallpaper.zoomed {
+            transform: scale(1.45);
+        }
+
+        /* ========== 图标样式 ========== */
+        
+        /* 应用图标 */
+        #img {
+            border-radius: 22px; /* 圆角，约为宽度的1/3，符合iOS图标规范 */
+            margin: 35px; /* 初始外边距 */
+            position: absolute; /* 绝对定位，相对于container */
+            left: 0; /* 初始左边距 */
+            top: 0; /* 初始上边距 */
+            /* 过渡动画属性：transform、圆角、宽高、边距、位置 */
+            transition-property: transform, border-radius, width, height, margin-left, margin-top, left, top;
+            /* 各属性的过渡时长 */
+            transition-duration: 0.2s, 1s, 0.5s, 0.5s, 0.4s, 0.4s, 0.5s, 0.5s;
+            width: 64px; /* 初始宽度 */
+            height: 64px; /* 初始高度 */
+            z-index: 1; /* 层级，确保在cover之上 */
+        }
+
+        /* ========== 遮罩层样式 ========== */
+        
+        /* 背景遮罩层，点击后展开为全屏 */
+        #cover {
+            background: #E8EAF6; /* 浅蓝灰色背景 */
+            position: absolute; /* 绝对定位 */
+            border-radius: 22px; /* 圆角，与图标保持一致 */
+            margin: 0; /* 无外边距 */
+            top: 50px; /* 初始上边距 - 再上移50px (从100px改为50px) */
+            left: 18px; /* 左边距 */
+            /* 过渡动画属性 - 使用iOS弹簧曲线 */
+            transition-property: transform, border-radius, width, height, margin, left, top;
+            transition-duration: 0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s;
+            transition-timing-function: ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1);
+            width: 56px; /* 初始宽度 */
+            height: 56px; /* 初始高度 */
+            display: flex; /* 使用flex布局居中SVG */
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none; /* 禁用文本选中 */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            outline: none; /* 禁用焦点轮廓 */
+            -webkit-tap-highlight-color: transparent; /* 禁用移动端点击高亮 */
+            z-index: 1; /* 初始层级 */
+        }
+
+        /* 第一个图标展开时提高层级 */
+        #cover.open {
+            z-index: 100; /* 展开时显示在最上层 */
+        }
+
+        /* 第二个应用图标 */
+        #cover2 {
+            background: #E8EAF6; /* 浅蓝灰色背景 */
+            position: absolute; /* 绝对定位 */
+            border-radius: 22px; /* 圆角，与图标保持一致 */
+            margin: 0; /* 无外边距 */
+            top: 50px; /* 初始上边距 */
+            left: 88px; /* 放在第一个图标右边 */
+            /* 过渡动画属性 - 使用iOS弹簧曲线 */
+            transition-property: transform, border-radius, width, height, margin, left, top;
+            transition-duration: 0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s;
+            transition-timing-function: ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1);
+            width: 56px; /* 初始宽度 */
+            height: 56px; /* 初始高度 */
+            display: flex; /* 使用flex布局居中SVG */
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none; /* 禁用文本选中 */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            outline: none; /* 禁用焦点轮廓 */
+            -webkit-tap-highlight-color: transparent; /* 禁用移动端点击高亮 */
+            box-sizing: border-box; /* 确保尺寸计算正确 */
+            z-index: 2; /* 确保在第一个图标之上 */
+        }
+
+        /* 第二个图标展开时提高层级 */
+        #cover2.open {
+            z-index: 100; /* 展开时显示在最上层 */
+        }
+
+        /* 第二个图标样式 */
+        #icon2 {
+            width: 32px; /* 初始宽度 */
+            height: 32px; /* 初始高度 */
+            color: #5C6BC0; /* 图标颜色 */
+            transition: margin-top 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6); /* 更强的弹性回弹动画 */
+            pointer-events: none; /* 不阻挡点击事件 */
+            margin-top: 0; /* 初始位置居中 */
+        }
+
+        /* 展开状态下第二个图标偏上 */
+        #cover2.open #icon2 {
+            margin-top: -300px; /* 向上偏移150px */
+        }
+
+        /* 第三个应用图标 */
+        #cover3 {
+            background: #F3E5F5; /* 浅紫色背景 */
+            position: absolute; /* 绝对定位 */
+            border-radius: 22px; /* 圆角 */
+            margin: 0;
+            top: 50px;
+            left: 158px; /* 在第二个图标右边 */
+            /* 过渡动画属性 - 使用iOS弹簧曲线 */
+            transition-property: transform, border-radius, width, height, margin, left, top;
+            transition-duration: 0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s;
+            transition-timing-function: ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1);
+            width: 56px;
+            height: 56px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+            z-index: 3;
+        }
+
+        /* 第三个图标展开时提高层级 */
+        #cover3.open {
+            z-index: 100;
+        }
+
+        /* 第三个图标样式 */
+        #icon3 {
+            width: 32px;
+            height: 32px;
+            color: #AB47BC; /* 紫色 */
+            transition: margin-top 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            pointer-events: none;
+            margin-top: 0;
+        }
+
+        /* 展开状态下第三个图标偏上 */
+        #cover3.open #icon3 {
+            margin-top: -300px;
+        }
+
+        /* 第四个应用图标 */
+        #cover4 {
+            background: #E0F2F1; /* 浅青色背景 */
+            position: absolute;
+            border-radius: 22px;
+            margin: 0;
+            top: 50px;
+            left: 228px; /* 在第三个图标右边 */
+            /* 过渡动画属性 - 使用iOS弹簧曲线 */
+            transition-property: transform, border-radius, width, height, margin, left, top;
+            transition-duration: 0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s;
+            transition-timing-function: ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1);
+            width: 56px;
+            height: 56px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+            z-index: 4;
+        }
+
+        /* 第四个图标展开时提高层级 */
+        #cover4.open {
+            z-index: 100;
+        }
+
+        /* 第四个图标样式 */
+        #icon4 {
+            width: 32px;
+            height: 32px;
+            color: #26A69A; /* 青色 */
+            transition: margin-top 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            pointer-events: none;
+            margin-top: 0;
+        }
+
+        /* 展开状态下第四个图标偏上 */
+        #cover4.open #icon4 {
+            margin-top: -300px;
+        }
+
+        /* SVG图标样式 */
+        #icon {
+            width: 32px; /* 初始宽度 */
+            height: 32px; /* 初始高度 */
+            color: #5C6BC0; /* 图标颜色 */
+            transition: margin-top 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6); /* 更强的弹性回弹动画 */
+            pointer-events: none; /* 不阻挡点击事件 */
+            margin-top: 0; /* 初始位置居中 */
+        }
+
+        /* 展开状态下图标偏上 */
+        #cover.open #icon {
+            margin-top: -300px; /* 向上偏移150px */
+        }
+
+        /* ========== 应用界面样式 (来自 1.0.25fix.html) ========== */
+
+        /* 应用内容容器 - 默认隐藏 */
+        .app-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s cubic-bezier(0.25, 1, 0.25, 1);
+            overflow: hidden;
+            background: #f2f2f7;
+        }
+
+        /* 展开时显示应用内容 */
+        #cover.open .app-content,
+        #cover2.open .app-content,
+        #cover3.open .app-content,
+        #cover4.open .app-content {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 应用主体 */
+        .app-body {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 50px);
+            background: #f2f2f7;
+            overflow: hidden;
+        }
+
+        /* 页面 */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            overflow-y: auto;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s, filter 0.4s ease;
+            filter: blur(0);
+            background: #f2f2f7;
+            box-sizing: border-box;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .page::-webkit-scrollbar {
+            display: none;
+        }
+
+        .page.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        /* 页面滑出效果 */
+        .page.slide-left,
+        .subpage.slide-left {
+            transform: translateX(-40%);
+            opacity: 0.4;
+            filter: blur(8px);
+            visibility: visible;
+        }
+
+        /* 子页面 */
+        .subpage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            background: rgba(242, 242, 247, 0.88);
+            overflow-y: auto;
+            transform: translateX(100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1), backdrop-filter 0.6s ease, -webkit-backdrop-filter 0.6s ease, background 0.3s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 50;
+            box-sizing: border-box;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .subpage::-webkit-scrollbar {
+            display: none;
+        }
+
+        .subpage.show {
+            transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            background: #f2f2f7;
+        }
+
+        /* 卡片组 */
+        .group {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 列表项 */
+        .item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 0.5px solid #e5e5ea;
+            cursor: pointer;
+            font-size: 16px;
+            color: #000;
+        }
+
+        .item:last-child { border-bottom: none; }
+        .item:active { background: rgba(0,0,0,0.06); }
+
+        .item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            margin-right: 12px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .item-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .item-text { flex: 1; }
+        .item-desc { font-size: 14px; color: #86868b; text-align: right; margin-right: 8px; }
+        .item-arrow { color: #c7c7cc; font-size: 14px; flex-shrink: 0; }
+
+        /* 开关 */
+        .item-switch {
+            width: 50px;
+            height: 30px;
+            background: #e5e5ea;
+            border-radius: 15px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+        }
+
+        .item-switch.active { background: #34C759; }
+        .item-switch::after {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: #fff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .item-switch.active::after { transform: translateX(20px); }
+
+        /* 聊天项 */
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 0.5px solid #e5e5ea;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .chat-item:last-child { border-bottom: none; }
+
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #007AFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .chat-avatar svg { width: 24px; height: 24px; fill: currentColor; }
+
+        .chat-info { flex: 1; min-width: 0; }
+        .chat-name { font-weight: 600; color: #000; font-size: 16px; margin-bottom: 4px; }
+        .chat-msg { color: #86868b; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-time { font-size: 12px; color: #86868b; margin-left: 8px; }
+
+        /* 返回按钮 */
+        .back-btn {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            margin-bottom: 16px;
+            color: #007AFF;
+            font-size: 17px;
+            cursor: pointer;
+        }
+        .back-btn::before {
+            content: '';
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            margin-right: 4px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23007AFF' d='M16 22L6 12L16 2l1.775 1.775L9.55 12l8.225 8.225z'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: rotate(0deg);
+        }
+
+        /* 日历样式 */
+        .calendar-month {
+            text-align: center;
+            font-size: 17px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 15px;
+            padding: 10px 0;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+            padding: 0 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .calendar-day {
+            padding: 0;
+            font-size: 14px;
+            color: #000;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .calendar-day.header {
+            font-weight: 600;
+            color: #86868b;
+            font-size: 12px;
+        }
+
+        .calendar-day.today {
+            background: #007AFF;
+            color: #fff;
+        }
+
+        /* ========== 关于本机页面样式 (小米HyperOS风格) ========== */
+        .about-header {
+            text-align: center;
+            padding: 40px 20px 30px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        }
+
+        .about-os-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: #007AFF;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .about-os-version {
+            font-size: 16px;
+            color: #86868b;
+            font-weight: 500;
+        }
+
+        .about-card {
+            background: #fff;
+            border-radius: 16px;
+            margin: 0 16px 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .about-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 18px;
+            border-bottom: 0.5px solid #f0f0f0;
+        }
+
+        .about-item:last-child {
+            border-bottom: none;
+        }
+
+        .about-label {
+            font-size: 15px;
+            color: #000;
+            font-weight: 500;
+        }
+
+        .about-value-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .about-value {
+            font-size: 14px;
+            color: #86868b;
+        }
+
+        .about-arrow {
+            font-size: 14px;
+            color: #c7c7cc;
+        }
+
+        .about-spec-card {
+            background: #fff;
+            border-radius: 16px;
+            margin: 0 16px;
+            padding: 20px 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .about-device-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 0.5px solid #f0f0f0;
+        }
+
+        .about-spec-item {
+            margin-bottom: 18px;
+        }
+
+        .about-spec-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .about-spec-value {
+            font-size: 17px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 4px;
+        }
+
+        .about-spec-label {
+            font-size: 13px;
+            color: #86868b;
+        }
+
+        .about-battery-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e5ea;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .about-battery-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #34C759 0%, #30D158 100%);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* 相机样式 */
+        .camera-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .camera-viewfinder {
+            width: 240px;
+            height: 320px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .camera-viewfinder::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            transform: translate(-50%, -50%);
+        }
+
+        .camera-controls {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .camera-btn {
+            width: 64px;
+            height: 64px;
+            border: 4px solid #fff;
+            border-radius: 50%;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .camera-btn::after {
+            content: '';
+            position: absolute;
+            width: 52px;
+            height: 52px;
+            background: #fff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* ========== 动画定义 ========== */
+        
+        /* 文字淡入动画 */
+        @keyframes appear {
+            from {
+                filter: blur(6px); /* 初始模糊 */
+                opacity: 0; /* 初始透明 */
+                transform: scale(1); /* 初始缩放 */
+            }
+            to {
+                filter: blur(0); /* 最终清晰 */
+                opacity: 1; /* 最终不透明 */
+                transform: scale(1); /* 最终缩放 */
+            }
+        }
+
+        /* ========== 签名文字样式 ========== */
+        
+        /* 底部签名/提示文字 */
+        .sign {
+            font-size: 16px; /* 字体大小 */
+            text-shadow: 0 1px 1px rgba(128, 125, 128, 0.5); /* 文字阴影 */
+            position: absolute; /* 绝对定位 */
+            top: 75%; /* 距离顶部75% */
+            width: 100%; /* 宽度100% */
+            text-align: center; /* 文字居中 */
+            animation-name: appear; /* 应用淡入动画 */
+            animation-delay: 0.5s; /* 动画延迟0.5秒 */
+            animation-duration: 0.5s; /* 动画时长0.5秒 */
+            animation-fill-mode: forwards; /* 动画结束后保持最终状态 */
+            filter: blur(16px); /* 初始模糊状态 */
+            opacity: 0; /* 初始透明 */
+            transform: scale(1.2); /* 初始放大 */
+        }
+
+        /* ========== 状态栏样式 ========== */
+
+        .status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 28px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 20px;
+            box-sizing: border-box;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: none;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .status-bar-time {
+            min-width: 42px;
+        }
+
+        .status-bar-icons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-bar-icons svg {
+            width: 14px;
+            height: 14px;
+            fill: #fff;
+        }
+
+        .status-bar-icons .battery-svg {
+            width: 20px;
+            height: 14px;
+        }
+
+        .status-bar-icons .signal-svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .status-bar-icons .wifi-svg {
+            width: 15px;
+            height: 14px;
+        }
+
+        /* ========== 控制中心样式 ========== */
+        
+        #controlCenter {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        #controlCenter.show {
+            pointer-events: auto;
+        }
+
+        /* 控制中心模糊背景层 - 独立元素 */
+        .cc-blur-bg {
+            position: absolute;
+            top: -60px;
+            left: -60px;
+            right: -60px;
+            bottom: -60px;
+            background: rgba(200, 200, 200, 0.15);
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #controlCenter.show .cc-blur-bg {
+            opacity: 1;
+        }
+
+        /* 控制中心内容层 */
+        #controlCenter .cc-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 45px 10px 10px 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(-80px);
+            transition: opacity 0.5s ease-out 0.05s, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s;
+            z-index: 1;
+        }
+
+        #controlCenter.show .cc-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 每行异步动画 */
+        .cc-status-bar,
+        .cc-row,
+        .cc-grid {
+            opacity: 0;
+            transform: translateY(-60px);
+            transition: opacity 0.4s ease-out calc(var(--row-index) * 0.08s),
+                        transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--row-index) * 0.08s);
+        }
+
+        #controlCenter.show .cc-status-bar,
+        #controlCenter.show .cc-row,
+        #controlCenter.show .cc-grid {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========== 背景遮罩层样式 ========== */
+        #backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s cubic-bezier(0.25, 1, 0.25, 1);
+            z-index: 0;
+        }
+
+        #backdrop.show {
+            opacity: 1;
+        }
+
+        /* ========== iOS 风格控制中心样式 ========== */
+
+        /* 状态栏 */
+        .cc-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding: 0 2px;
+        }
+
+        .cc-status-icons {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .cc-status-icons .signal {
+            font-size: 9px;
+        }
+
+        .cc-battery-icon {
+            width: 22px;
+            height: 22px;
+            color: #fff;
+        }
+
+        /* 行容器 */
+        .cc-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* 卡片基础样式 */
+        .cc-card {
+            background: rgba(120, 120, 120, 0.35);
+            border-radius: 12px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            color: #fff;
+            flex: 1;
+            min-height: 45px;
+        }
+
+        .cc-card.active {
+            background: #4CAF50;
+        }
+
+        .cc-card svg {
+            width: 22px;
+            height: 22px;
+            margin-bottom: 3px;
+        }
+
+        .cc-card-title {
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        .cc-card-subtitle {
+            font-size: 8px;
+            opacity: 0.8;
+        }
+
+        /* 媒体控制卡片 - 正方形 */
+        .cc-media-card {
+            background: rgba(120, 120, 120, 0.35);
+            border-radius: 20px;
+            width: 140px;
+            flex-shrink: 0;
+            color: #fff;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cc-media-icon {
+            width: 26px;
+            height: 26px;
+        }
+
+        /* 竖条滑块 */
+        .cc-slider-vertical {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            width: 65px;
+            height: 140px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 6px;
+            box-sizing: border-box;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .cc-slider-vertical.dark {
+            background: rgba(120, 120, 120, 0.35);
+        }
+
+        .cc-slider-track {
+            width: 4px;
+            height: 70%;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 2px;
+            position: relative;
+            margin-bottom: 6px;
+        }
+
+        .cc-slider-vertical.dark .cc-slider-track {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .cc-slider-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 2px;
+            transition: height 0.1s ease-out;
+        }
+
+        .cc-slider-vertical.dark .cc-slider-fill {
+            background: #fff;
+        }
+
+        .cc-slider-icon {
+            width: 20px;
+            height: 20px;
+            color: #333;
+            flex-shrink: 0;
+        }
+
+        .cc-slider-vertical.dark .cc-slider-icon {
+            color: #fff;
+        }
+
+        /* 按钮网格 */
+        .cc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .cc-grid-btn {
+            aspect-ratio: 1;
+            background: rgba(120, 120, 120, 0.35);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .cc-grid-btn.active {
+            background: #fff;
+            color: #333;
+        }
+
+        .cc-grid-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .cc-text-icon {
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 主容器 -->
+    <div id="container">
+        <!-- 壁纸层 -->
+        <div id="wallpaper"></div>
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-bar-time" id="statusTime">9:41</div>
+            <div class="status-bar-icons">
+                <svg class="signal-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2 22h20V2z"/><path fill="#fff" d="M2 22h20V2z"/><rect x="2" y="14" width="3" height="8" rx="0.5" fill="#fff"/><rect x="7" y="11" width="3" height="11" rx="0.5" fill="#fff"/><rect x="12" y="8" width="3" height="14" rx="0.5" fill="#fff"/><rect x="17" y="5" width="3" height="17" rx="0.5" fill="#fff"/></svg>
+                <svg class="wifi-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                <svg class="battery-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M4 18q-1.25 0-2.125-.875T1 15V9q0-1.25.875-2.125T4 6h13.5q1.25 0 2.125.875T20.5 9v6q0 1.25-.875 2.125T17.5 18zm17.5-3.5v-5h.5q.425 0 .713.288T23 10.5v3q0 .425-.288.713T22 14.5z"/></svg>
+            </div>
+        </div>
+        <!-- 背景压暗模糊层 -->
+        <div id="backdrop"></div>
+        <!-- 第二个应用图标（先渲染，层级较低） -->
+        <div id="cover2">
+            <!-- SVG图标 -->
+            <svg id="icon2" xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M7.843 20.198C9.872 21.399 10.886 22 12 22s2.128-.6 4.157-1.802l.686-.407c2.029-1.2 3.043-1.802 3.6-2.791c.557-.99.557-2.19.557-4.594M20.815 8a3.6 3.6 0 0 0-.372-1c-.557-.99-1.571-1.59-3.6-2.792l-.686-.406C14.128 2.601 13.114 2 12 2s-2.128.6-4.157 1.802l-.686.406C5.128 5.41 4.114 6.011 3.557 7C3 7.99 3 9.19 3 11.594v.812c0 2.403 0 3.605.557 4.594c.226.402.528.74.943 1.08"/><circle cx="12" cy="12" r="3"/></g></svg>
+            <!-- 应用界面内容 -->
+            <div class="app-content" id="app-content-2">
+                <div class="app-body">
+                    <div class="page show" id="page-setting">
+                        <div class="group">
+                            <div class="item" data-subpage="setting-wifi"><div class="item-icon" style="background:#007AFF"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg></div><div class="item-text">无线局域网</div><div class="item-arrow">></div></div>
+                            <div class="item" data-subpage="setting-bluetooth"><div class="item-icon" style="background:#007AFF"><svg viewBox="0 0 24 24"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg></div><div class="item-text">蓝牙</div><div class="item-arrow">></div></div>
+                            <div class="item" data-subpage="setting-cellular"><div class="item-icon" style="background:#34C759"><svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg></div><div class="item-text">蜂窝网络</div><div class="item-arrow">></div></div>
+                        </div>
+                        <div class="group">
+                            <div class="item" data-subpage="setting-notification"><div class="item-icon" style="background:#FF3B30"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></div><div class="item-text">通知</div><div class="item-arrow">></div></div>
+                            <div class="item" data-subpage="setting-sound"><div class="item-icon" style="background:#FF9500"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="item-text">声音与触感</div><div class="item-arrow">></div></div>
+                            <div class="item" data-subpage="setting-display"><div class="item-icon" style="background:#007AFF"><svg viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/></svg></div><div class="item-text">显示与亮度</div><div class="item-arrow">></div></div>
+                        </div>
+                        <div class="group">
+                            <div class="item" data-subpage="setting-general"><div class="item-icon" style="background:#86868b"><svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><path fill="currentColor" d="M10.825 22q-.675 0-1.162-.45t-.588-1.1L8.85 18.8q-.325-.125-.612-.3t-.563-.375l-1.55.65q-.625.275-1.25.05t-.975-.8l-1.175-2.05q-.35-.575-.2-1.225t.675-1.075l1.325-1Q4.5 12.5 4.5 12.337v-.675q0-.162.025-.337l-1.325-1Q2.675 9.9 2.525 9.25t.2-1.225L3.9 5.975q.35-.575.975-.8t1.25.05l1.55.65q.275-.2.575-.375t.6-.3l.225-1.65q.1-.65.588-1.1T10.825 2h2.35q.675 0 1.163.45t.587 1.1l.225 1.65q.325.125.613.3t.562.375l1.55-.65q.625-.275 1.25-.05t.975.8l1.175 2.05q.35.575.2 1.225t-.675 1.075l-1.325 1q.025.175.025.338v.674q0 .163-.05.338l1.325 1q.525.425.675 1.075t-.2 1.225l-1.2 2.05q-.35.575-.975.8t-1.25-.05l-1.5-.65q-.275.2-.575.375t-.6.3l-.225 1.65q-.1.65-.587 1.1t-1.163.45zm1.225-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"/></svg></div><div class="item-text">通用</div><div class="item-arrow">></div></div>
+                        </div>
+                    </div>
+                    <!-- 二级页面：无线局域网 -->
+                    <div class="subpage" id="subpage-setting-wifi">
+                        <div class="back-btn" data-back>返回</div>
+                        <div class="group">
+                            <div class="item"><div class="item-text">无线局域网</div><div class="item-switch active"></div></div>
+                        </div>
+                        <div class="group">
+                            <div class="item"><div class="item-text">Home-WiFi</div><div class="item-desc">已连接</div></div>
+                            <div class="item"><div class="item-text">Office-5G</div><div class="item-desc"></div></div>
+                            <div class="item"><div class="item-text">CoffeeShop_Free</div><div class="item-desc"></div></div>
+                        </div>
+                    </div>
+                    <!-- 二级页面：蓝牙 -->
+                    <div class="subpage" id="subpage-setting-bluetooth">
+                        <div class="back-btn" data-back>返回</div>
+                        <div class="group">
+                            <div class="item"><div class="item-text">蓝牙</div><div class="item-switch active"></div></div>
+                        </div>
+                        <div class="group">
+                            <div class="item"><div class="item-text">AirPods Pro</div><div class="item-desc">已连接</div></div>
+                            <div class="item"><div class="item-text">小米手环</div><div class="item-desc">未连接</div></div>
+                        </div>
+                    </div>
+                    <!-- 二级页面：显示与亮度 -->
+                    <div class="subpage" id="subpage-setting-display">
+                        <div class="back-btn" data-back>返回</div>
+                        <div class="group">
+                            <div class="item" style="flex-wrap:wrap;padding:12px 16px;">
+                                <div style="width:100%;font-size:13px;color:#86868b;margin-bottom:8px;">壁纸API地址</div>
+                                <div style="display:flex;gap:8px;width:100%;">
+                                    <input type="text" id="wallpaperApiInput" placeholder="https://imgapi.siiway.top/image" style="flex:1;padding:8px 12px;border:0.5px solid #e5e5ea;border-radius:8px;font-size:14px;outline:none;background:#f9f9f9;min-width:0;">
+                                </div>
+                            </div>
+                            <div class="item" id="wallpaperSaveBtn">
+                                <div class="item-icon" style="background:#34C759"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+                                <div class="item-text">保存并使用</div>
+                            </div>
+                            <div class="item" id="wallpaperRefreshBtn">
+                                <div class="item-icon" style="background:#007AFF"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></div>
+                                <div class="item-text">刷新背景图</div>
+                            </div>
+                            <div class="item" id="wallpaperResetBtn">
+                                <div class="item-icon" style="background:#FF3B30"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+                                <div class="item-text">恢复默认API</div>
+                            </div>
+                            <div class="item" id="wallpaperUploadBtn">
+                                <div class="item-icon" style="background:#FF9500"><svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg></div>
+                                <div class="item-text">上传图片</div>
+                            </div>
+                        </div>
+                        <input type="file" id="wallpaperFileInput" accept="image/*" style="display:none;">
+                        <div class="group">
+                            <div class="item" style="flex-direction:column;align-items:flex-start;">
+                                <div class="item-text" style="margin-bottom:4px;">预览刷新方式</div>
+                                <div class="item-desc" style="text-align:left;font-size:12px;">随机刷新会添加随机参数避免缓存，直接刷新使用纯URL</div>
+                            </div>
+                            <div class="item" id="refreshModeToggle">
+                                <div class="item-icon" style="background:#007AFF"><svg viewBox="0 0 24 24"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46A7.93 7.93 0 0012 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46A7.93 7.93 0 0012 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg></div>
+                                <div class="item-text" id="refreshModeLabel">随机刷新</div>
+                                <div class="item-arrow">&gt;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 二级页面：通用 -->
+                    <div class="subpage" id="subpage-setting-general">
+                        <div class="back-btn" data-back>返回</div>
+                        <div class="group">
+                            <div class="item" data-subpage="setting-about"><div class="item-text">关于本机</div><div class="item-arrow">></div></div>
+                            <div class="item"><div class="item-text">软件更新</div><div class="item-desc">已是最新版本</div><div class="item-arrow">></div></div>
+                        </div>
+                    </div>
+                    <!-- 三级页面：关于本机 -->
+                    <div class="subpage" id="subpage-setting-about">
+                        <div class="back-btn" data-back>返回</div>
+                        <!-- 顶部大标题区域 -->
+                        <div class="about-header">
+                            <div class="about-os-name">Source UI</div>
+                            <div class="about-os-version">2.0.0</div>
+                        </div>
+                        <!-- 设备信息卡片 -->
+                        <div class="about-card">
+                            <div class="about-item">
+                                <div class="about-label">设备名称</div>
+                                <div class="about-value-row">
+                                    <span class="about-value">Dev#0002-L107</span>
+                                    <span class="about-arrow">></span>
+                                </div>
+                            </div>
+                            <div class="about-item">
+                                <div class="about-label">存储空间</div>
+                                <div class="about-value-row">
+                                    <span class="about-value">45.2GB/128GB</span>
+                                    <span class="about-arrow">></span>
+                                </div>
+                            </div>
+                            <div class="about-item">
+                                <div class="about-label">OS版本</div>
+                                <div class="about-value-row">
+                                    <span class="about-value">2.0.0.WOJCNXM</span>
+                                </div>
+                            </div>
+                            <div class="about-item">
+                                <div class="about-label">保修期</div>
+                                <div class="about-value-row">
+                                    <span class="about-value">至 详情页查看</span>
+                                    <span class="about-arrow">></span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 设备规格卡片 -->
+                        <div class="about-spec-card">
+                            <div class="about-device-name">Source UI Dev</div>
+                            <div class="about-spec-item">
+                                <div class="about-spec-value">WebKit Engine</div>
+                                <div class="about-spec-label">处理器</div>
+                            </div>
+                            <div class="about-spec-item">
+                                <div class="about-spec-value">4.0GB</div>
+                                <div class="about-spec-label">运行内存</div>
+                            </div>
+                            <div class="about-spec-item">
+                                <div class="about-spec-value">6550mAh(typ)</div>
+                                <div class="about-spec-label">电池容量</div>
+                                <div class="about-battery-bar">
+                                    <div class="about-battery-fill" style="width: 78%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 第三个应用图标 -->
+        <div id="cover3">
+            <!-- SVG图标 - 邮件 -->
+            <svg id="icon3" xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><path fill="currentColor" d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm8.263-7.212q.137-.038.262-.113L19.6 8.25q.2-.125.3-.312t.1-.413q0-.5-.425-.75T18.7 6.8L12 11L5.3 6.8q-.45-.275-.875-.012T4 7.525q0 .25.1.438t.3.287l7.075 4.425q.125.075.263.113t.262.037t.263-.037"/></svg>
+            <!-- 应用界面内容 -->
+            <div class="app-content" id="app-content-3">
+                <div class="app-body">
+                    <div class="page show" id="page-mail">
+                        <div class="group">
+                            <div class="chat-item" data-subpage="mail-detail-1">
+                                <div class="chat-avatar" style="background:#007AFF"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                                <div class="chat-info"><div class="chat-name">张三</div><div class="chat-msg">项目进度更新 - 本周已完成前端页面设计...</div></div>
+                                <div class="chat-time">10:20</div>
+                            </div>
+                            <div class="chat-item" data-subpage="mail-detail-2">
+                                <div class="chat-avatar" style="background:#34C759"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+                                <div class="chat-info"><div class="chat-name">李四</div><div class="chat-msg">会议邀请 - 明天下午3点，会议室A...</div></div>
+                                <div class="chat-time">昨天</div>
+                            </div>
+                            <div class="chat-item">
+                                <div class="chat-avatar" style="background:#FF9500"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                                <div class="chat-info"><div class="chat-name">王五</div><div class="chat-msg">报销申请 - 上个月的差旅费报销已通过...</div></div>
+                                <div class="chat-time">周三</div>
+                            </div>
+                            <div class="chat-item">
+                                <div class="chat-avatar" style="background:#8E8E93"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+                                <div class="chat-info"><div class="chat-name">系统通知</div><div class="chat-msg">密码即将过期 - 您的账户密码将在7天后...</div></div>
+                                <div class="chat-time">周一</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 邮件详情页1 -->
+                    <div class="subpage" id="subpage-mail-detail-1">
+                        <div class="back-btn" data-back>返回</div>
+                        <div style="padding: 16px;">
+                            <h3 style="margin-bottom: 8px;">项目进度更新</h3>
+                            <div style="color: #86868b; font-size: 14px; margin-bottom: 16px;">张三 &lt;zhangsan@example.com&gt;</div>
+                            <div style="line-height: 1.6; color: #333;">
+                                <p>大家好，</p>
+                                <p>本周我们已完成前端页面设计，包括主页、设置页和个人中心等主要界面。</p>
+                                <p>下周开始将进行后端API对接工作，预计在下周五前完成第一版demo。</p>
+                                <p>如有问题请及时沟通。</p>
+                                <p style="margin-top: 16px;">张三</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 邮件详情页2 -->
+                    <div class="subpage" id="subpage-mail-detail-2">
+                        <div class="back-btn" data-back>返回</div>
+                        <div style="padding: 16px;">
+                            <h3 style="margin-bottom: 8px;">会议邀请</h3>
+                            <div style="color: #86868b; font-size: 14px; margin-bottom: 16px;">李四 &lt;lisi@example.com&gt;</div>
+                            <div style="line-height: 1.6; color: #333;">
+                                <p>各位同事，</p>
+                                <p>明天下午3点在会议室A召开新产品讨论会，请大家准时参加。</p>
+                                <p>会议议程：</p>
+                                <p>1. 产品需求评审</p>
+                                <p>2. 技术方案讨论</p>
+                                <p>3. 排期确认</p>
+                                <p style="margin-top: 16px;">李四</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 第四个应用图标 -->
+        <div id="cover4">
+            <!-- SVG图标 - 日历 -->
+            <svg id="icon4" xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><path fill="currentColor" d="M5 22q-.825 0-1.412-.587T3 20V6q0-.825.588-1.412T5 4h1V3q0-.425.288-.712T7 2t.713.288T8 3v1h8V3q0-.425.288-.712T17 2t.713.288T18 3v1h1q.825 0 1.413.588T21 6v14q0 .825-.587 1.413T19 22zm0-2h14V10H5z"/></svg>
+            <!-- 应用界面内容 -->
+            <div class="app-content" id="app-content-4">
+                <div class="app-body">
+                    <div class="page show" id="page-calendar">
+                        <div class="group">
+                            <div class="calendar-month">2025年3月</div>
+                            <div class="calendar-grid">
+                                <div class="calendar-day header">日</div><div class="calendar-day header">一</div><div class="calendar-day header">二</div><div class="calendar-day header">三</div><div class="calendar-day header">四</div><div class="calendar-day header">五</div><div class="calendar-day header">六</div>
+                                <div class="calendar-day"></div><div class="calendar-day"></div><div class="calendar-day"></div><div class="calendar-day"></div><div class="calendar-day"></div><div class="calendar-day"></div><div class="calendar-day">1</div>
+                                <div class="calendar-day">2</div><div class="calendar-day">3</div><div class="calendar-day">4</div><div class="calendar-day">5</div><div class="calendar-day">6</div><div class="calendar-day today">7</div><div class="calendar-day">8</div>
+                                <div class="calendar-day">9</div><div class="calendar-day">10</div><div class="calendar-day">11</div><div class="calendar-day">12</div><div class="calendar-day">13</div><div class="calendar-day">14</div><div class="calendar-day">15</div>
+                            </div>
+                        </div>
+                        <div class="group">
+                            <div class="item"><div class="item-icon" style="background:#007AFF;width:8px;height:8px;border-radius:50%;min-width:8px;"></div><div class="item-text">10:00 团队会议</div></div>
+                            <div class="item"><div class="item-icon" style="background:#FF9500;width:8px;height:8px;border-radius:50%;min-width:8px;"></div><div class="item-text">14:30 项目评审</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 背景遮罩层（后渲染，层级较高） -->
+        <div id="cover">
+            <!-- SVG图标 -->
+            <svg id="icon" xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M7.843 20.198C9.872 21.399 10.886 22 12 22s2.128-.6 4.157-1.802l.686-.407c2.029-1.2 3.043-1.802 3.6-2.791c.557-.99.557-2.19.557-4.594M20.815 8a3.6 3.6 0 0 0-.372-1c-.557-.99-1.571-1.59-3.6-2.792l-.686-.406C14.128 2.601 13.114 2 12 2s-2.128.6-4.157 1.802l-.686.406C5.128 5.41 4.114 6.011 3.557 7C3 7.99 3 9.19 3 11.594v.812c0 2.403 0 3.605.557 4.594c.226.402.528.74.943 1.08"/><circle cx="12" cy="12" r="3"/></g></svg>
+            <!-- 应用界面内容 -->
+            <div class="app-content" id="app-content-1">
+                <div class="app-body">
+                    <div class="page show" id="page-camera" style="padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <div class="camera-body">
+                            <div class="camera-viewfinder"></div>
+                            <div class="camera-controls">
+                                <div class="camera-btn"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 签名文字 -->
+        <div class="sign">
+            .
+        </div>
+        
+        <!-- 控制中心 -->
+        <div id="controlCenter">
+            <div class="cc-blur-bg"></div>
+            <div class="cc-content">
+                <!-- 状态栏 -->
+                <div class="cc-status-bar" style="--row-index: 0;">
+                    <div class="cc-date">3月7日 周六</div>
+                    <div class="cc-status-icons">
+                        <svg class="cc-battery-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M4.385 17q-.994 0-1.69-.695T2 14.615v-5.23q0-.994.696-1.69T4.385 7H17.5q.994 0 1.689.696t.696 1.689v5.23q0 .994-.696 1.69T17.5 17zm0-1H17.5q.589 0 .987-.398t.398-.986V9.385q0-.589-.399-.987Q18.089 8 17.5 8H4.385q-.589 0-.987.398T3 9.385v5.23q0 .589.398.987t.986.398m16.5-1.884V9.904h.308q.344 0 .576.232t.232.576v2.596q0 .343-.232.575t-.576.233zm-16.5-.308v-3.616q0-.343.233-.575t.575-.232h11.5q.344 0 .576.232t.232.575v3.616q0 .343-.232.575t-.576.233h-11.5q-.343 0-.575-.233t-.232-.575"/></svg>
+                    </div>
+                </div>
+
+                <!-- 第一行：WLAN + 数据 -->
+                <div class="cc-row" style="--row-index: 1;">
+                    <div class="cc-card cc-wifi">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                        <div class="cc-card-title">WLAN</div>
+                        <div class="cc-card-subtitle">已关闭</div>
+                    </div>
+                    <div class="cc-card cc-cellular active">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2z"/></svg>
+                        <div class="cc-card-title">中国电信</div>
+                        <div class="cc-card-subtitle">已开启</div>
+                    </div>
+                </div>
+
+                <!-- 第二行：媒体 + 亮度 + 音量 -->
+                <div class="cc-row" style="--row-index: 2;">
+                    <div class="cc-media-card">
+                        <svg class="cc-media-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                    </div>
+                    <div class="cc-slider-vertical dark" id="brightnessSlider">
+                        <div class="cc-slider-track">
+                            <div class="cc-slider-fill" style="height: 70%;"></div>
+                        </div>
+                        <svg class="cc-slider-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                    </div>
+                    <div class="cc-slider-vertical dark" id="volumeSlider">
+                        <div class="cc-slider-track">
+                            <div class="cc-slider-fill" style="height: 50%;"></div>
+                        </div>
+                        <svg class="cc-slider-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    </div>
+                </div>
+
+                <!-- 第三行：快捷按钮网格 -->
+                <div class="cc-grid" style="--row-index: 3;">
+                    <div class="cc-grid-btn active">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn active">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn active">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                    </div>
+                    
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+                    </div>
+                    
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <div class="cc-text-icon">极</div>
+                    </div>
+                    <div class="cc-grid-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    </div>
+                    <div class="cc-grid-btn active">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ========== 状态栏时间更新 ==========
+        function updateStatusTime() {
+            var t = new Date();
+            var h = t.getHours();
+            var m = String(t.getMinutes()).padStart(2, '0');
+            var statusTime = document.getElementById('statusTime');
+            if (statusTime) statusTime.innerText = h + ':' + m;
+        }
+        updateStatusTime();
+        setInterval(updateStatusTime, 10000);
+
+        // ========== 获取DOM元素 ==========
+        var cover = document.getElementById("cover"); // 遮罩层元素
+        var cover2 = document.getElementById("cover2"); // 第二个遮罩层元素
+        var cover3 = document.getElementById("cover3"); // 第三个遮罩层元素
+        var cover4 = document.getElementById("cover4"); // 第四个遮罩层元素
+        var controlCenter = document.getElementById("controlCenter"); // 控制中心元素
+        var backdrop = document.getElementById("backdrop"); // 背景遮罩层元素
+        var wallpaper = document.getElementById("wallpaper"); // 壁纸层元素
+        var opened = 1; // 应用状态：0=关闭，1=打开，默认打开
+        var controlCenterOpened = false; // 控制中心状态
+        var opened2 = 0; // 第二个应用状态：0=关闭，1=打开，默认关闭
+        var opened3 = 0; // 第三个应用状态：0=关闭，1=打开，默认关闭
+        var opened4 = 0; // 第四个应用状态：0=关闭，1=打开，默认关闭
+
+        // ========== 打开应用动画 ==========
+        /**
+         * 展开应用动画
+         * @param {string} options - 可选参数，"gestrue"表示手势触发
+         */
+        function openApp(options) {
+            // 先给图标添加过渡动画
+            var icon = document.getElementById("icon");
+            if (icon) {
+                icon.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon.style.width = "128px";
+                icon.style.height = "128px";
+            }
+            // 提高层级，确保在最上层
+            cover.style.zIndex = "100";
+            cover2.style.zIndex = "2";
+            // 遮罩展开为全屏
+            cover.style.width = "100%";
+            cover.style.height = "100%";
+            cover.style.borderRadius = "44.5px"; // 展开后保持与容器一致的圆角
+            cover.style.margin = "0";
+            cover.classList.add("open"); // 添加展开状态类
+            // 显示背景压暗模糊层
+            if (backdrop) {
+                backdrop.classList.add("show");
+            }
+            // 壁纸缩放效果
+            if (wallpaper) {
+                wallpaper.classList.add("zoomed");
+            }
+        }
+
+        // ========== 关闭应用动画 ==========
+        /**
+         * 关闭应用动画
+         * @param {string} options - 可选参数，"gestrue"表示手势触发
+         */
+        function closeApp(options) {
+            // 先给图标添加过渡动画，避免突然变小
+            var icon = document.getElementById("icon");
+            if (icon) {
+                icon.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon.style.width = "32px";
+                icon.style.height = "32px";
+            }
+            // 遮罩恢复初始大小和位置
+            cover.style.width = "56px";
+            cover.style.height = "56px";
+            cover.style.borderRadius = "22px"; // 恢复圆角
+            cover.style.margin = "0";
+            cover.style.left = "18px";
+            cover.style.top = "50px"; // 恢复到初始位置 (再上移50px)
+            cover.classList.remove("open"); // 移除展开状态类
+            // 动画完成后恢复层级
+            setTimeout(function() {
+                cover.style.zIndex = "1";
+            }, 500);
+            // 隐藏背景压暗模糊层
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            // 壁纸恢复原始大小
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+        }
+
+        // ========== 打开第二个应用动画 ==========
+        function openApp2(options) {
+            var icon2 = document.getElementById("icon2");
+            if (icon2) {
+                icon2.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon2.style.width = "128px";
+                icon2.style.height = "128px";
+            }
+            // 提高层级，确保在最上层
+            cover2.style.zIndex = "100";
+            cover.style.zIndex = "1";
+            // 先重置transform，避免之前的缩放影响
+            cover2.style.transform = "scale(1)";
+            cover2.style.width = "100%";
+            cover2.style.height = "100%";
+            cover2.style.borderRadius = "44.5px";
+            cover2.style.margin = "0";
+            cover2.style.left = "0px";
+            cover2.style.top = "0px";
+            cover2.classList.add("open");
+            if (backdrop) {
+                backdrop.classList.add("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.add("zoomed");
+            }
+            opened2 = 1;
+        }
+
+        // ========== 关闭第二个应用动画 ==========
+        function closeApp2(options) {
+            var icon2 = document.getElementById("icon2");
+            if (icon2) {
+                icon2.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon2.style.width = "32px";
+                icon2.style.height = "32px";
+            }
+            cover2.style.transform = "scale(1)";
+            cover2.style.width = "56px";
+            cover2.style.height = "56px";
+            cover2.style.borderRadius = "22px";
+            cover2.style.margin = "0";
+            cover2.style.left = "88px";
+            cover2.style.top = "50px";
+            cover2.classList.remove("open");
+            // 动画完成后恢复层级
+            setTimeout(function() {
+                cover2.style.zIndex = "2";
+            }, 500);
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+            opened2 = 0;
+        }
+
+        // ========== 打开第三个应用动画 ==========
+        function openApp3(options) {
+            var icon3 = document.getElementById("icon3");
+            if (icon3) {
+                icon3.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon3.style.width = "128px";
+                icon3.style.height = "128px";
+            }
+            // 提高层级，确保在最上层
+            cover3.style.zIndex = "100";
+            cover.style.zIndex = "1";
+            cover2.style.zIndex = "2";
+            cover4.style.zIndex = "4";
+            // 先重置transform，避免之前的缩放影响
+            cover3.style.transform = "scale(1)";
+            cover3.style.width = "100%";
+            cover3.style.height = "100%";
+            cover3.style.borderRadius = "44.5px";
+            cover3.style.margin = "0";
+            cover3.style.left = "0px";
+            cover3.style.top = "0px";
+            cover3.classList.add("open");
+            if (backdrop) {
+                backdrop.classList.add("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.add("zoomed");
+            }
+            opened3 = 1;
+        }
+
+        // ========== 关闭第三个应用动画 ==========
+        function closeApp3(options) {
+            var icon3 = document.getElementById("icon3");
+            if (icon3) {
+                icon3.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon3.style.width = "32px";
+                icon3.style.height = "32px";
+            }
+            cover3.style.transform = "scale(1)";
+            cover3.style.width = "56px";
+            cover3.style.height = "56px";
+            cover3.style.borderRadius = "22px";
+            cover3.style.margin = "0";
+            cover3.style.left = "158px";
+            cover3.style.top = "50px";
+            cover3.classList.remove("open");
+            // 动画完成后恢复层级
+            setTimeout(function() {
+                cover3.style.zIndex = "3";
+            }, 500);
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+            opened3 = 0;
+        }
+
+        // ========== 打开第四个应用动画 ==========
+        function openApp4(options) {
+            var icon4 = document.getElementById("icon4");
+            if (icon4) {
+                icon4.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon4.style.width = "128px";
+                icon4.style.height = "128px";
+            }
+            // 提高层级，确保在最上层
+            cover4.style.zIndex = "100";
+            cover.style.zIndex = "1";
+            cover2.style.zIndex = "2";
+            cover3.style.zIndex = "3";
+            // 先重置transform，避免之前的缩放影响
+            cover4.style.transform = "scale(1)";
+            cover4.style.width = "100%";
+            cover4.style.height = "100%";
+            cover4.style.borderRadius = "44.5px";
+            cover4.style.margin = "0";
+            cover4.style.left = "0px";
+            cover4.style.top = "0px";
+            cover4.classList.add("open");
+            if (backdrop) {
+                backdrop.classList.add("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.add("zoomed");
+            }
+            opened4 = 1;
+        }
+
+        // ========== 关闭第四个应用动画 ==========
+        function closeApp4(options) {
+            var icon4 = document.getElementById("icon4");
+            if (icon4) {
+                icon4.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon4.style.width = "32px";
+                icon4.style.height = "32px";
+            }
+            cover4.style.transform = "scale(1)";
+            cover4.style.width = "56px";
+            cover4.style.height = "56px";
+            cover4.style.borderRadius = "22px";
+            cover4.style.margin = "0";
+            cover4.style.left = "228px";
+            cover4.style.top = "50px";
+            cover4.classList.remove("open");
+            // 动画完成后恢复层级
+            setTimeout(function() {
+                cover4.style.zIndex = "4";
+            }, 500);
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+            opened4 = 0;
+        }
+        
+        // ========== 第二个图标点击事件 ==========
+        cover2.addEventListener("click", function(e) {
+            // 如果点击的是应用内容区域，不执行关闭
+            if (e.target.closest('.app-content')) {
+                return;
+            }
+            if (opened2 === 0) {
+                openApp2();
+            } else {
+                closeApp2();
+            }
+        });
+        
+        // ========== 第二个图标触摸事件（拖拽退出） ==========
+        var lastX2 = "", lastY2 = "", oL2, oT2;
+        
+        cover2.addEventListener("touchstart", function(e) {
+            if (e.targetTouches.length == 1 && opened2 === 1) {
+                oL2 = e.touches[0].clientX - this.offsetLeft;
+                oT2 = e.touches[0].clientY - this.offsetTop;
+                this.style.transitionDuration = "0s";
+                cover2.style.zIndex = "100";
+                cover.style.zIndex = "1";
+                var icon2 = document.getElementById("icon2");
+                if (icon2) {
+                    icon2.style.transition = "none";
+                }
+            }
+        }, { passive: true });
+        
+        cover2.addEventListener("touchmove", function(e) {
+            if (e.targetTouches.length == 1 && opened2 === 1) {
+                lastX2 = e.touches[0].clientX;
+                lastY2 = e.touches[0].clientY;
+                var deltaY = lastY2 - oT2;
+                if (deltaY > 0 && deltaY > 30 && oT2 < 100) {
+                    if (!controlCenterOpened) {
+                        controlCenter.classList.add("show");
+                        controlCenterOpened = true;
+                    }
+                    return;
+                }
+                if (deltaY >= 0) return;
+                var dampedDeltaY = deltaY * 0.4;
+                this.style.left = (lastX2 - oL2) + "px";
+                this.style.top = dampedDeltaY + "px";
+                var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+                var finalScale = Math.max(0.5, scale);
+                this.style.transform = "scale(" + finalScale + ")";
+                this.style.borderRadius = "44.5px";
+                var icon2 = document.getElementById("icon2");
+                if (icon2) {
+                    var iconSize = Math.max(100, 128 * finalScale);
+                    icon2.style.width = iconSize + "px";
+                    icon2.style.height = iconSize + "px";
+                }
+            }
+        }, { passive: true });
+        
+        cover2.addEventListener("touchend", function(e) {
+            if (e.targetTouches.length == 0 && opened2 === 1) {
+                var icon2 = document.getElementById("icon2");
+                if (icon2) {
+                    icon2.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                }
+                if (cover2.offsetTop < 0 && Math.abs(cover2.offsetTop / window.screen.height) > 0.125) {
+                    cover2.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    cover2.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                    closeApp2();
+                } else {
+                    cover2.style.transitionDuration = "0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    cover2.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                    cover2.style.transform = "scale(1)";
+                    cover2.style.left = "0px";
+                    cover2.style.top = "0px";
+                    cover2.style.margin = "0";
+                    cover2.style.width = "100%";
+                    cover2.style.height = "100%";
+                }
+            }
+        });
+        
+        // ========== 第二个图标鼠标事件（拖拽退出） ==========
+        var isMouseDragging2 = false;
+        var mouseOffsetX2 = 0, mouseOffsetY2 = 0;
+        
+        cover2.addEventListener("mousedown", function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (opened2 === 1) {
+                isMouseDragging2 = true;
+                mouseOffsetX2 = e.clientX - this.offsetLeft;
+                mouseOffsetY2 = e.clientY - this.offsetTop;
+                this.style.transitionDuration = "0s";
+                cover2.style.zIndex = "100";
+                cover.style.zIndex = "1";
+                var icon2 = document.getElementById("icon2");
+                if (icon2) {
+                    icon2.style.transition = "none";
+                }
+                if (!e.target.closest('.app-content')) {
+                    e.preventDefault();
+                }
+            }
+        });
+        
+        document.addEventListener("mousemove", function(e) {
+            if (!isMouseDragging2 || opened2 !== 1) return;
+            var currentX = e.clientX;
+            var currentY = e.clientY;
+            var deltaY = currentY - mouseOffsetY2;
+            if (deltaY > 0 && deltaY > 30 && mouseOffsetY2 < 100) {
+                if (!controlCenterOpened) {
+                    controlCenter.classList.add("show");
+                    controlCenterOpened = true;
+                }
+                return;
+            }
+            if (deltaY >= 0) return;
+            var dampedDeltaY = deltaY * 0.4;
+            cover2.style.left = (currentX - mouseOffsetX2) + "px";
+            cover2.style.top = dampedDeltaY + "px";
+            var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+            var finalScale = Math.max(0.5, scale);
+            cover2.style.transform = "scale(" + finalScale + ")";
+            cover2.style.borderRadius = "44.5px";
+            var icon2 = document.getElementById("icon2");
+            if (icon2) {
+                var iconSize = Math.max(100, 128 * finalScale);
+                icon2.style.width = iconSize + "px";
+                icon2.style.height = iconSize + "px";
+            }
+        });
+        
+        document.addEventListener("mouseup", function(e) {
+            if (!isMouseDragging2 || opened2 !== 1) return;
+            isMouseDragging2 = false;
+            var icon2 = document.getElementById("icon2");
+            if (icon2) {
+                icon2.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            }
+            if (cover2.offsetTop < 0 && Math.abs(cover2.offsetTop / window.screen.height) > 0.125) {
+                cover2.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover2.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                closeApp2();
+            } else {
+                cover2.style.transitionDuration = "0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover2.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                cover2.style.transform = "scale(1)";
+                cover2.style.left = "0px";
+                cover2.style.top = "0px";
+                cover2.style.margin = "0";
+                cover2.style.width = "100%";
+                cover2.style.height = "100%";
+            }
+        });
+        
+        // ========== 第三个图标点击事件 ==========
+        cover3.addEventListener("click", function(e) {
+            // 如果点击的是应用内容区域，不执行关闭
+            if (e.target.closest('.app-content')) {
+                return;
+            }
+            if (opened3 === 0) {
+                openApp3();
+            } else {
+                closeApp3();
+            }
+        });
+
+        // ========== 第三个图标触摸事件（拖拽退出） ==========
+        var lastX3 = "", lastY3 = "", oL3, oT3;
+
+        cover3.addEventListener("touchstart", function(e) {
+            if (e.targetTouches.length == 1 && opened3 === 1) {
+                oL3 = e.touches[0].clientX - this.offsetLeft;
+                oT3 = e.touches[0].clientY - this.offsetTop;
+                this.style.transitionDuration = "0s";
+                cover3.style.zIndex = "100";
+                cover.style.zIndex = "1";
+                cover2.style.zIndex = "2";
+                cover4.style.zIndex = "4";
+                var icon3 = document.getElementById("icon3");
+                if (icon3) {
+                    icon3.style.transition = "none";
+                }
+            }
+        }, { passive: true });
+
+        cover3.addEventListener("touchmove", function(e) {
+            if (e.targetTouches.length == 1 && opened3 === 1) {
+                lastX3 = e.touches[0].clientX;
+                lastY3 = e.touches[0].clientY;
+                var deltaY = lastY3 - oT3;
+                if (deltaY > 0 && deltaY > 30 && oT3 < 100) {
+                    if (!controlCenterOpened) {
+                        controlCenter.classList.add("show");
+                        controlCenterOpened = true;
+                    }
+                    return;
+                }
+                if (deltaY >= 0) return;
+                var dampedDeltaY = deltaY * 0.4;
+                this.style.left = (lastX3 - oL3) + "px";
+                this.style.top = dampedDeltaY + "px";
+                var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+                var finalScale = Math.max(0.5, scale);
+                this.style.transform = "scale(" + finalScale + ")";
+                this.style.borderRadius = "44.5px";
+                var icon3 = document.getElementById("icon3");
+                if (icon3) {
+                    var iconSize = Math.max(100, 128 * finalScale);
+                    icon3.style.width = iconSize + "px";
+                    icon3.style.height = iconSize + "px";
+                }
+            }
+        }, { passive: true });
+
+        cover3.addEventListener("touchend", function(e) {
+            if (e.targetTouches.length == 0 && opened3 === 1) {
+                var icon3 = document.getElementById("icon3");
+                if (icon3) {
+                    icon3.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                }
+                if (cover3.offsetTop < 0 && Math.abs(cover3.offsetTop / window.screen.height) > 0.125) {
+                    cover3.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    cover3.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                    closeApp3();
+                } else {
+                    cover3.style.transitionDuration = "0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    cover3.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                    cover3.style.transform = "scale(1)";
+                    cover3.style.left = "0px";
+                    cover3.style.top = "0px";
+                    cover3.style.margin = "0";
+                    cover3.style.width = "100%";
+                    cover3.style.height = "100%";
+                }
+            }
+        });
+
+        // ========== 第三个图标鼠标事件（拖拽退出） ==========
+        var isMouseDragging3 = false;
+        var mouseOffsetX3 = 0, mouseOffsetY3 = 0;
+
+        cover3.addEventListener("mousedown", function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (opened3 === 1) {
+                isMouseDragging3 = true;
+                mouseOffsetX3 = e.clientX - this.offsetLeft;
+                mouseOffsetY3 = e.clientY - this.offsetTop;
+                this.style.transitionDuration = "0s";
+                // 确保拖拽时在最上层
+                cover3.style.zIndex = "100";
+                cover.style.zIndex = "1";
+                cover2.style.zIndex = "2";
+                cover4.style.zIndex = "4";
+                var icon3 = document.getElementById("icon3");
+                if (icon3) {
+                    icon3.style.transition = "none";
+                }
+                if (!e.target.closest('.app-content')) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        document.addEventListener("mousemove", function(e) {
+            if (!isMouseDragging3 || opened3 !== 1) return;
+            var currentX = e.clientX;
+            var currentY = e.clientY;
+            var deltaY = currentY - mouseOffsetY3;
+            if (deltaY > 0 && deltaY > 30 && mouseOffsetY3 < 100) {
+                if (!controlCenterOpened) {
+                    controlCenter.classList.add("show");
+                    controlCenterOpened = true;
+                }
+                return;
+            }
+            if (deltaY >= 0) return;
+            var dampedDeltaY = deltaY * 0.4;
+            cover3.style.left = (currentX - mouseOffsetX3) + "px";
+            cover3.style.top = dampedDeltaY + "px";
+            var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+            var finalScale = Math.max(0.5, scale);
+            cover3.style.transform = "scale(" + finalScale + ")";
+            cover3.style.borderRadius = "44.5px";
+            var icon3 = document.getElementById("icon3");
+            if (icon3) {
+                var iconSize = Math.max(100, 128 * finalScale);
+                icon3.style.width = iconSize + "px";
+                icon3.style.height = iconSize + "px";
+            }
+        });
+
+        document.addEventListener("mouseup", function(e) {
+            if (!isMouseDragging3 || opened3 !== 1) return;
+            isMouseDragging3 = false;
+            var icon3 = document.getElementById("icon3");
+            if (icon3) {
+                icon3.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            }
+            if (cover3.offsetTop < 0 && Math.abs(cover3.offsetTop / window.screen.height) > 0.125) {
+                cover3.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover3.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                closeApp3();
+            } else {
+                cover3.style.transitionDuration = "0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover3.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                cover3.style.transform = "scale(1)";
+                cover3.style.left = "0px";
+                cover3.style.top = "0px";
+                cover3.style.margin = "0";
+                cover3.style.width = "100%";
+                cover3.style.height = "100%";
+            }
+        });
+
+        // ========== 第四个图标点击事件 ==========
+        cover4.addEventListener("click", function(e) {
+            // 如果点击的是应用内容区域，不执行关闭
+            if (e.target.closest('.app-content')) {
+                return;
+            }
+            if (opened4 === 0) {
+                openApp4();
+            } else {
+                closeApp4();
+            }
+        });
+
+        // ========== 第四个图标触摸事件（拖拽退出） ==========
+        var lastX4 = "", lastY4 = "", oL4, oT4;
+
+        cover4.addEventListener("touchstart", function(e) {
+            if (e.targetTouches.length == 1 && opened4 === 1) {
+                oL4 = e.touches[0].clientX - this.offsetLeft;
+                oT4 = e.touches[0].clientY - this.offsetTop;
+                this.style.transitionDuration = "0s";
+                cover4.style.zIndex = "100";
+                cover.style.zIndex = "1";
+                cover2.style.zIndex = "2";
+                cover3.style.zIndex = "3";
+                var icon4 = document.getElementById("icon4");
+                if (icon4) {
+                    icon4.style.transition = "none";
+                }
+            }
+        }, { passive: true });
+
+        cover4.addEventListener("touchmove", function(e) {
+            if (e.targetTouches.length == 1 && opened4 === 1) {
+                lastX4 = e.touches[0].clientX;
+                lastY4 = e.touches[0].clientY;
+                var deltaY = lastY4 - oT4;
+                if (deltaY > 0 && deltaY > 30 && oT4 < 100) {
+                    if (!controlCenterOpened) {
+                        controlCenter.classList.add("show");
+                        controlCenterOpened = true;
+                    }
+                    return;
+                }
+                if (deltaY >= 0) return;
+                var dampedDeltaY = deltaY * 0.4;
+                this.style.left = (lastX4 - oL4) + "px";
+                this.style.top = dampedDeltaY + "px";
+                var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+                var finalScale = Math.max(0.5, scale);
+                this.style.transform = "scale(" + finalScale + ")";
+                this.style.borderRadius = "44.5px";
+                var icon4 = document.getElementById("icon4");
+                if (icon4) {
+                    var iconSize = Math.max(100, 128 * finalScale);
+                    icon4.style.width = iconSize + "px";
+                    icon4.style.height = iconSize + "px";
+                }
+            }
+        }, { passive: true });
+
+        cover4.addEventListener("touchend", function(e) {
+            if (e.targetTouches.length == 0 && opened4 === 1) {
+                var icon4 = document.getElementById("icon4");
+                if (icon4) {
+                    icon4.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                }
+                if (cover4.offsetTop < 0 && Math.abs(cover4.offsetTop / window.screen.height) > 0.125) {
+                    cover4.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    cover4.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                    closeApp4();
+                } else {
+                    cover4.style.transitionDuration = "0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    cover4.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                    cover4.style.transform = "scale(1)";
+                    cover4.style.left = "0px";
+                    cover4.style.top = "0px";
+                    cover4.style.margin = "0";
+                    cover4.style.width = "100%";
+                    cover4.style.height = "100%";
+                }
+            }
+        });
+
+        // ========== 第四个图标鼠标事件（拖拽退出） ==========
+        var isMouseDragging4 = false;
+        var mouseOffsetX4 = 0, mouseOffsetY4 = 0;
+
+        cover4.addEventListener("mousedown", function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (opened4 === 1) {
+                isMouseDragging4 = true;
+                mouseOffsetX4 = e.clientX - this.offsetLeft;
+                mouseOffsetY4 = e.clientY - this.offsetTop;
+                this.style.transitionDuration = "0s";
+                // 确保拖拽时在最上层
+                cover4.style.zIndex = "100";
+                cover.style.zIndex = "1";
+                cover2.style.zIndex = "2";
+                cover3.style.zIndex = "3";
+                var icon4 = document.getElementById("icon4");
+                if (icon4) {
+                    icon4.style.transition = "none";
+                }
+                if (!e.target.closest('.app-content')) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        document.addEventListener("mousemove", function(e) {
+            if (!isMouseDragging4 || opened4 !== 1) return;
+            var currentX = e.clientX;
+            var currentY = e.clientY;
+            var deltaY = currentY - mouseOffsetY4;
+            if (deltaY > 0 && deltaY > 30 && mouseOffsetY4 < 100) {
+                if (!controlCenterOpened) {
+                    controlCenter.classList.add("show");
+                    controlCenterOpened = true;
+                }
+                return;
+            }
+            if (deltaY >= 0) return;
+            var dampedDeltaY = deltaY * 0.4;
+            cover4.style.left = (currentX - mouseOffsetX4) + "px";
+            cover4.style.top = dampedDeltaY + "px";
+            var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+            var finalScale = Math.max(0.5, scale);
+            cover4.style.transform = "scale(" + finalScale + ")";
+            cover4.style.borderRadius = "44.5px";
+            var icon4 = document.getElementById("icon4");
+            if (icon4) {
+                var iconSize = Math.max(100, 128 * finalScale);
+                icon4.style.width = iconSize + "px";
+                icon4.style.height = iconSize + "px";
+            }
+        });
+
+        document.addEventListener("mouseup", function(e) {
+            if (!isMouseDragging4 || opened4 !== 1) return;
+            isMouseDragging4 = false;
+            var icon4 = document.getElementById("icon4");
+            if (icon4) {
+                icon4.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            }
+            if (cover4.offsetTop < 0 && Math.abs(cover4.offsetTop / window.screen.height) > 0.125) {
+                cover4.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover4.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                closeApp4();
+            } else {
+                cover4.style.transitionDuration = "0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover4.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                cover4.style.transform = "scale(1)";
+                cover4.style.left = "0px";
+                cover4.style.top = "0px";
+                cover4.style.margin = "0";
+                cover4.style.width = "100%";
+                cover4.style.height = "100%";
+            }
+        });
+
+        // ========== 手势滑动变量 ==========
+        var lastX = ""; // 最后X坐标
+        var lastY = ""; // 最后Y坐标
+        var oL, oT; // 偏移量
+        
+        // ========== 遮罩层触摸事件 ==========
+        
+        // 触摸开始：记录初始位置，关闭过渡动画
+        cover.addEventListener("touchstart", function(e) {
+            if (e.targetTouches.length == 1) {
+                oL = e.touches[0].clientX - this.offsetLeft;
+                oT = e.touches[0].clientY - this.offsetTop;
+                this.style.transitionDuration = "0s";
+                cover.style.zIndex = "100";
+                cover2.style.zIndex = "2";
+                var icon = document.getElementById("icon");
+                if (icon) {
+                    icon.style.transition = "none";
+                }
+            }
+        }, { passive: true });
+        
+        // 触摸移动：跟随手指移动，实现带阻尼的拖拽效果
+        cover.addEventListener("touchmove", function(e) {
+            if (e.targetTouches.length == 1) {
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+                var deltaY = lastY - oT;
+                if (deltaY > 0 && deltaY > 30 && oT < 100) {
+                    if (!controlCenterOpened) {
+                        controlCenter.classList.add("show");
+                        controlCenterOpened = true;
+                    }
+                    return;
+                }
+                if (deltaY >= 0) {
+                    return;
+                }
+                var dampedDeltaY = deltaY * 0.4;
+                this.style.left = (lastX - oL) + "px";
+                this.style.top = dampedDeltaY + "px";
+                var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+                var finalScale = Math.max(0.5, scale);
+                this.style.transform = "scale(" + finalScale + ")";
+                this.style.borderRadius = "44.5px";
+                var icon = document.getElementById("icon");
+                if (icon) {
+                    var iconSize = Math.max(100, 128 * finalScale);
+                    icon.style.width = iconSize + "px";
+                    icon.style.height = iconSize + "px";
+                }
+            }
+        }, { passive: true });
+        
+        // 触摸结束：判断是否关闭应用或恢复展开
+        cover.addEventListener("touchend", function(e) {
+            if (e.targetTouches.length == 0) {
+                // 恢复图标过渡动画
+                var icon = document.getElementById("icon");
+                if (icon) {
+                    icon.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                }
+                // 向上拖动超过屏幕高度的12.5%时关闭应用（只检测向上滑动）
+                if (cover.offsetTop < 0 && Math.abs(cover.offsetTop / window.screen.height) > 0.125) {
+                    // 恢复过渡动画时长和曲线
+                    cover.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    cover.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                    closeApp("gestrue"); // 手势关闭
+                    opened = 0;
+                    // 重置样式（不重置top，让closeApp处理）
+                    cover.style.transform = "scale(1)";
+                    cover.style.left = "18px";
+                } else {
+                    // 未达到关闭阈值，恢复展开状态
+                    cover.style.transitionDuration = "0.2s, 1s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                    openApp("gestrue"); // 手势展开
+                    // 重置样式
+                    cover.style.transform = "scale(1)";
+                    cover.style.left = 0;
+                    cover.style.top = 0;
+                }
+            }
+        });
+
+        // ========== 遮罩层鼠标事件支持 ==========
+        var isMouseDragging = false;
+        var mouseStartX = 0;
+        var mouseStartY = 0;
+        var mouseOffsetX = 0;
+        var mouseOffsetY = 0;
+        
+        // 鼠标按下：记录初始位置，关闭过渡动画
+        cover.addEventListener("mousedown", function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            isMouseDragging = true;
+            // 计算鼠标相对于元素左上角的偏移
+            mouseOffsetX = e.clientX - this.offsetLeft;
+            mouseOffsetY = e.clientY - this.offsetTop;
+            mouseStartX = e.clientX;
+            mouseStartY = e.clientY;
+            // 关闭遮罩过渡动画，实现即时跟随
+            this.style.transitionDuration = "0s";
+            // 确保拖拽时在最上层
+            cover.style.zIndex = "100";
+            cover2.style.zIndex = "2";
+            // 关闭图标尺寸过渡，实现实时同步
+            var icon = document.getElementById("icon");
+            if (icon) {
+                icon.style.transition = "none";
+            }
+            if (!e.target.closest('.app-content')) {
+                e.preventDefault();
+            }
+        });
+        
+        // 鼠标移动：跟随鼠标移动，实现带阻尼的拖拽效果
+        document.addEventListener("mousemove", function(e) {
+            if (!isMouseDragging) return;
+            
+            var currentX = e.clientX;
+            var currentY = e.clientY;
+            // 计算拖动距离
+            var deltaY = currentY - mouseOffsetY;
+            // 向下滑动显示控制中心（从屏幕顶部区域开始滑动）
+            if (deltaY > 0 && deltaY > 30 && mouseOffsetY < 100) {
+                if (!controlCenterOpened) {
+                    controlCenter.classList.add("show");
+                    controlCenterOpened = true;
+                }
+                return;
+            }
+            // 只响应向上滑动（deltaY < 0）
+            if (deltaY >= 0) {
+                return;
+            }
+            // 应用阻尼系数（0.4），增强阻力感
+            var dampedDeltaY = deltaY * 0.4;
+            // 更新遮罩位置（带阻尼）
+            cover.style.left = (currentX - mouseOffsetX) + "px";
+            cover.style.top = dampedDeltaY + "px";
+            // 根据拖动距离计算缩放比例（越往上拖越小，带阻尼）
+            var scale = 1 - Math.abs(dampedDeltaY / window.screen.height * 1.5);
+            var finalScale = Math.max(0.5, scale);
+            cover.style.transform = "scale(" + finalScale + ")";
+            // 拖动时圆角变为44.5px（iOS风格大圆角）
+            cover.style.borderRadius = "44.5px";
+            // SVG图标跟随缩放（最小100px，避免太小）
+            var icon = document.getElementById("icon");
+            if (icon) {
+                var iconSize = Math.max(100, 128 * finalScale);
+                icon.style.width = iconSize + "px";
+                icon.style.height = iconSize + "px";
+            }
+        });
+        
+        // 鼠标释放：判断是否关闭应用或恢复展开
+        document.addEventListener("mouseup", function(e) {
+            if (!isMouseDragging) return;
+            isMouseDragging = false;
+            
+            // 恢复图标过渡动画
+            var icon = document.getElementById("icon");
+            if (icon) {
+                icon.style.transition = "margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            }
+            // 向上拖动超过屏幕高度的12.5%时关闭应用（只检测向上滑动）
+            if (cover.offsetTop < 0 && Math.abs(cover.offsetTop / window.screen.height) > 0.125) {
+                // 恢复过渡动画时长和曲线
+                cover.style.transitionDuration = "0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                closeApp("gestrue"); // 手势关闭
+                opened = 0;
+                // 重置样式（不重置top，让closeApp处理）
+                cover.style.transform = "scale(1)";
+                cover.style.left = "18px";
+            } else {
+                // 未达到关闭阈值，恢复展开状态
+                cover.style.transitionDuration = "0.2s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s, 0.5s";
+                cover.style.transitionTimingFunction = "ease, cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1), cubic-bezier(0.25, 1, 0.25, 1)";
+                openApp("gestrue"); // 手势展开
+                // 重置样式
+                cover.style.transform = "scale(1)";
+                cover.style.left = 0;
+                cover.style.top = 0;
+            }
+        });
+
+        // 点击控制中心外部关闭它
+        controlCenter.addEventListener("click", function(e) {
+            if (e.target === controlCenter) {
+                controlCenter.classList.remove("show");
+                controlCenterOpened = false;
+            }
+        });
+        
+        // 向上滑动关闭控制中心
+        controlCenter.addEventListener("touchstart", function(e) {
+            if (e.targetTouches.length == 1) {
+                oT = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        
+        controlCenter.addEventListener("touchmove", function(e) {
+            if (e.targetTouches.length == 1) {
+                var deltaY = e.touches[0].clientY - oT;
+                if (deltaY < -50) {
+                    controlCenter.classList.remove("show");
+                    controlCenterOpened = false;
+                }
+            }
+        }, { passive: true });
+        
+        // ========== 控制中心鼠标事件支持 ==========
+        var ccMouseStartY = 0;
+        var isCCMouseDragging = false;
+        
+        // 鼠标按下：记录初始位置
+        controlCenter.addEventListener("mousedown", function(e) {
+            isCCMouseDragging = true;
+            ccMouseStartY = e.clientY;
+        });
+        
+        // 鼠标移动：检测向上拖动关闭控制中心
+        controlCenter.addEventListener("mousemove", function(e) {
+            if (!isCCMouseDragging) return;
+            var deltaY = e.clientY - ccMouseStartY;
+            // 向上滑动超过50px关闭控制中心
+            if (deltaY < -50) {
+                controlCenter.classList.remove("show");
+                controlCenterOpened = false;
+                isCCMouseDragging = false;
+            }
+        });
+        
+        // 鼠标释放：重置拖动状态
+        controlCenter.addEventListener("mouseup", function(e) {
+            isCCMouseDragging = false;
+        });
+        
+        // 鼠标离开控制中心区域：重置拖动状态
+        controlCenter.addEventListener("mouseleave", function(e) {
+            isCCMouseDragging = false;
+        });
+        
+        // ========== 主容器全局下滑呼出控制中心 ==========
+        var container = document.getElementById("container");
+        var containerStartY = 0;
+        
+        container.addEventListener("touchstart", function(e) {
+            if (e.targetTouches.length == 1) {
+                containerStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        
+        container.addEventListener("touchmove", function(e) {
+            if (e.targetTouches.length == 1 && !controlCenterOpened) {
+                var currentY = e.touches[0].clientY;
+                var deltaY = currentY - containerStartY;
+                // 从屏幕顶部向下滑动超过30px呼出控制中心
+                if (deltaY > 30 && containerStartY < 80) {
+                    controlCenter.classList.add("show");
+                    controlCenterOpened = true;
+                }
+            }
+        }, { passive: true });
+        
+        // ========== 主容器全局鼠标下滑呼出控制中心 ==========
+        var containerMouseStartY = 0;
+        var isContainerMouseDragging = false;
+        
+        container.addEventListener("mousedown", function(e) {
+            isContainerMouseDragging = true;
+            containerMouseStartY = e.clientY;
+        });
+        
+        container.addEventListener("mousemove", function(e) {
+            if (!isContainerMouseDragging || controlCenterOpened) return;
+            var currentY = e.clientY;
+            var deltaY = currentY - containerMouseStartY;
+            // 从屏幕顶部向下滑动超过30px呼出控制中心
+            if (deltaY > 30 && containerMouseStartY < 80) {
+                controlCenter.classList.add("show");
+                controlCenterOpened = true;
+                isContainerMouseDragging = false;
+            }
+        });
+        
+        container.addEventListener("mouseup", function(e) {
+            isContainerMouseDragging = false;
+        });
+        
+        container.addEventListener("mouseleave", function(e) {
+            isContainerMouseDragging = false;
+        });
+
+        // ========== 亮度/音量滑块拖动功能 ==========
+        function initSlider(sliderId) {
+            var slider = document.getElementById(sliderId);
+            if (!slider) return;
+
+            var track = slider.querySelector('.cc-slider-track');
+            var fill = slider.querySelector('.cc-slider-fill');
+            var isDragging = false;
+
+            function updateSlider(clientY) {
+                var rect = track.getBoundingClientRect();
+                var percentage = 1 - (clientY - rect.top) / rect.height;
+                percentage = Math.max(0, Math.min(1, percentage));
+                fill.style.height = (percentage * 100) + '%';
+            }
+
+            slider.addEventListener('touchstart', function(e) {
+                isDragging = true;
+                updateSlider(e.touches[0].clientY);
+                e.preventDefault();
+            }, { passive: false });
+
+            slider.addEventListener('touchmove', function(e) {
+                if (isDragging) {
+                    updateSlider(e.touches[0].clientY);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            slider.addEventListener('touchend', function() {
+                isDragging = false;
+            });
+
+            // 鼠标支持（用于桌面端测试）
+            slider.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                updateSlider(e.clientY);
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    updateSlider(e.clientY);
+                }
+            });
+
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        }
+
+        // 初始化亮度滑块
+        initSlider('brightnessSlider');
+        // 初始化音量滑块
+        initSlider('volumeSlider');
+        
+        // ========== 键盘快捷键支持 ==========
+        document.addEventListener('keydown', function(e) {
+            // 按C键呼出/关闭控制中心
+            if (e.key === 'c' || e.key === 'C') {
+                if (controlCenterOpened) {
+                    controlCenter.classList.remove('show');
+                    controlCenterOpened = false;
+                } else {
+                    controlCenter.classList.add('show');
+                    controlCenterOpened = true;
+                }
+            }
+        });
+
+        // ========== 页面导航功能 ==========
+        var currentPage = null;
+        var subpageStack = [];
+
+        // 初始化页面导航
+        function initPageNavigation() {
+            // 获取所有带有 data-subpage 属性的元素
+            document.querySelectorAll('[data-subpage]').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var subpageId = this.getAttribute('data-subpage');
+                    var targetSubpage = document.getElementById('subpage-' + subpageId);
+                    if (!targetSubpage) return;
+                    
+                    // 找到当前显示的页面
+                    var parentBody = this.closest('.app-body');
+                    var currentVisiblePage = parentBody.querySelector('.page.show') || parentBody.querySelector('.subpage.show');
+                    
+                    if (currentVisiblePage) {
+                        currentVisiblePage.classList.add('slide-left');
+                        subpageStack.push(currentVisiblePage);
+                    }
+                    
+                    targetSubpage.classList.add('show');
+                });
+            });
+
+            // 返回按钮事件
+            document.querySelectorAll('[data-back]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    goBack();
+                });
+            });
+        }
+
+        // 返回上一页
+        function goBack() {
+            if (subpageStack.length === 0) return;
+            
+            var currentSubpage = document.querySelector('.subpage.show:not(.slide-left)');
+            if (currentSubpage) {
+                currentSubpage.classList.remove('show');
+            }
+            
+            var prevPage = subpageStack.pop();
+            if (prevPage) {
+                prevPage.classList.remove('slide-left');
+            }
+        }
+
+        // 初始化
+        initPageNavigation();
+
+        // ========== 壁纸API管理 ==========
+        var DEFAULT_WALLPAPER_API = 'https://imgapi.siiway.top/image';
+        var wallpaperApiInput = document.getElementById('wallpaperApiInput');
+        var wallpaper = document.getElementById('wallpaper');
+        var refreshModeLabel = document.getElementById('refreshModeLabel');
+        var randomRefresh = true;
+
+        function getWallpaperApi() {
+            return localStorage.getItem('wallpaperApi') || DEFAULT_WALLPAPER_API;
+        }
+
+        function applyWallpaper(apiUrl) {
+            var url = apiUrl || getWallpaperApi();
+            if (randomRefresh) {
+                url = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_t=' + Date.now();
+            }
+            wallpaper.style.backgroundImage = 'url("' + url + '")';
+        }
+
+        function saveWallpaperApi(apiUrl) {
+            apiUrl = apiUrl.trim();
+            if (!apiUrl) {
+                apiUrl = DEFAULT_WALLPAPER_API;
+            }
+            localStorage.setItem('wallpaperApi', apiUrl);
+            localStorage.removeItem('wallpaperDataUrl');
+            wallpaperApiInput.value = apiUrl;
+            randomRefresh = false;
+            applyWallpaper(apiUrl);
+            setTimeout(function() { randomRefresh = true; }, 100);
+        }
+
+        if (wallpaperApiInput) {
+            wallpaperApiInput.value = getWallpaperApi();
+        }
+
+        var wallpaperSaveBtn = document.getElementById('wallpaperSaveBtn');
+        if (wallpaperSaveBtn) {
+            wallpaperSaveBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                saveWallpaperApi(wallpaperApiInput.value);
+            });
+        }
+
+        var wallpaperRefreshBtn = document.getElementById('wallpaperRefreshBtn');
+        if (wallpaperRefreshBtn) {
+            wallpaperRefreshBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                applyWallpaper();
+            });
+        }
+
+        var wallpaperResetBtn = document.getElementById('wallpaperResetBtn');
+        if (wallpaperResetBtn) {
+            wallpaperResetBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                localStorage.removeItem('wallpaperApi');
+                localStorage.removeItem('wallpaperDataUrl');
+                wallpaperApiInput.value = DEFAULT_WALLPAPER_API;
+                randomRefresh = false;
+                applyWallpaper(DEFAULT_WALLPAPER_API);
+                setTimeout(function() { randomRefresh = true; }, 100);
+            });
+        }
+
+        var refreshModeToggle = document.getElementById('refreshModeToggle');
+        if (refreshModeToggle) {
+            refreshModeToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                randomRefresh = !randomRefresh;
+                refreshModeLabel.innerText = randomRefresh ? '随机刷新' : '直接刷新';
+            });
+        }
+
+        var wallpaperFileInput = document.getElementById('wallpaperFileInput');
+        var wallpaperUploadBtn = document.getElementById('wallpaperUploadBtn');
+        if (wallpaperFileInput && wallpaperUploadBtn) {
+            wallpaperUploadBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                wallpaperFileInput.click();
+            });
+            wallpaperFileInput.addEventListener('change', function() {
+                var file = this.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var dataUrl = e.target.result;
+                    wallpaper.style.backgroundImage = 'url("' + dataUrl + '")';
+                    localStorage.setItem('wallpaperDataUrl', dataUrl);
+                    wallpaperApiInput.value = '';
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        (function() {
+            var savedDataUrl = localStorage.getItem('wallpaperDataUrl');
+            if (savedDataUrl) {
+                wallpaper.style.backgroundImage = 'url("' + savedDataUrl + '")';
+                return;
+            }
+            var savedApi = getWallpaperApi();
+            if (savedApi !== DEFAULT_WALLPAPER_API) {
+                var noRandom = randomRefresh;
+                randomRefresh = false;
+                applyWallpaper(savedApi);
+                randomRefresh = noRandom;
+            }
+        })();
+    </script>
+</body>
+
+</html>
