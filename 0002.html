@@ -1551,6 +1551,56 @@
             }
         }
 
+        // ========== 桌面图标下沉效果 ==========
+        function sinkOtherIcons(excludeAppId) {
+            var sinkOffset = 30; // 下沉距离
+            var duration = "0.4s";
+            var easing = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+
+            if (excludeAppId !== 1) {
+                cover.style.transition = "transform " + duration + " " + easing;
+                cover.style.transform = "translateY(" + sinkOffset + "px)";
+            }
+            if (excludeAppId !== 2) {
+                cover2.style.transition = "transform " + duration + " " + easing;
+                cover2.style.transform = "translateY(" + sinkOffset + "px)";
+            }
+            if (excludeAppId !== 3) {
+                cover3.style.transition = "transform " + duration + " " + easing;
+                cover3.style.transform = "translateY(" + sinkOffset + "px)";
+            }
+            if (excludeAppId !== 4) {
+                cover4.style.transition = "transform " + duration + " " + easing;
+                cover4.style.transform = "translateY(" + sinkOffset + "px)";
+            }
+        }
+
+        // ========== 恢复桌面图标位置 ==========
+        function restoreIcons() {
+            var duration = "0.35s";
+            var easing = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+
+            cover.style.transition = "transform " + duration + " " + easing;
+            cover.style.transform = "translateY(0)";
+
+            cover2.style.transition = "transform " + duration + " " + easing;
+            cover2.style.transform = "translateY(0)";
+
+            cover3.style.transition = "transform " + duration + " " + easing;
+            cover3.style.transform = "translateY(0)";
+
+            cover4.style.transition = "transform " + duration + " " + easing;
+            cover4.style.transform = "translateY(0)";
+
+            // 动画结束后清理transition
+            setTimeout(function() {
+                cover.style.transition = "";
+                cover2.style.transition = "";
+                cover3.style.transition = "";
+                cover4.style.transition = "";
+            }, 350);
+        }
+
         // ========== 打开应用动画 ==========
         /**
          * 展开应用动画
@@ -1562,6 +1612,9 @@
 
             // 记录打开时间
             appOpenTime[1] = Date.now();
+
+            // 桌面图标下沉效果
+            sinkOtherIcons(1);
 
             // 先给图标添加过渡动画
             var icon = document.getElementById("icon");
@@ -1595,6 +1648,9 @@
          * @param {string} options - 可选参数，"gestrue"表示手势触发
          */
         function closeApp(options) {
+            // 恢复桌面图标位置
+            restoreIcons();
+
             // 先给图标添加过渡动画，避免突然变小
             var icon = document.getElementById("icon");
             if (icon) {
@@ -1632,6 +1688,9 @@
             // 记录打开时间
             appOpenTime[2] = Date.now();
 
+            // 桌面图标下沉效果
+            sinkOtherIcons(2);
+
             var icon2 = document.getElementById("icon2");
             if (icon2) {
                 icon2.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
@@ -1661,6 +1720,9 @@
 
         // ========== 关闭第二个应用动画 ==========
         function closeApp2(options) {
+            // 恢复桌面图标位置
+            restoreIcons();
+
             var icon2 = document.getElementById("icon2");
             if (icon2) {
                 icon2.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
@@ -1696,6 +1758,9 @@
             // 记录打开时间
             appOpenTime[3] = Date.now();
 
+            // 桌面图标下沉效果
+            sinkOtherIcons(3);
+
             var icon3 = document.getElementById("icon3");
             if (icon3) {
                 icon3.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
@@ -1727,6 +1792,9 @@
 
         // ========== 关闭第三个应用动画 ==========
         function closeApp3(options) {
+            // 恢复桌面图标位置
+            restoreIcons();
+
             var icon3 = document.getElementById("icon3");
             if (icon3) {
                 icon3.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
@@ -1762,6 +1830,9 @@
             // 记录打开时间
             appOpenTime[4] = Date.now();
 
+            // 桌面图标下沉效果
+            sinkOtherIcons(4);
+
             var icon4 = document.getElementById("icon4");
             if (icon4) {
                 icon4.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
@@ -1793,6 +1864,9 @@
 
         // ========== 关闭第四个应用动画 ==========
         function closeApp4(options) {
+            // 恢复桌面图标位置
+            restoreIcons();
+
             var icon4 = document.getElementById("icon4");
             if (icon4) {
                 icon4.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
