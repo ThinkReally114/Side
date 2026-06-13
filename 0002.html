@@ -1543,11 +1543,11 @@
                 openApps.sort(function(a, b) { return a.time - b.time; });
                 var earliestApp = openApps[0];
 
-                // 关闭最早打开的应用
-                if (earliestApp.id === 1) closeApp();
-                else if (earliestApp.id === 2) closeApp2();
-                else if (earliestApp.id === 3) closeApp3();
-                else if (earliestApp.id === 4) closeApp4();
+                // 关闭最早打开的应用（不恢复图标位置，由新应用的打开流程统一处理）
+                if (earliestApp.id === 1) closeAppWithoutRestore();
+                else if (earliestApp.id === 2) closeApp2WithoutRestore();
+                else if (earliestApp.id === 3) closeApp3WithoutRestore();
+                else if (earliestApp.id === 4) closeApp4WithoutRestore();
             }
         }
 
@@ -1707,6 +1707,35 @@
             }
         }
 
+        // ========== 关闭应用动画（不恢复图标位置） ==========
+        function closeAppWithoutRestore() {
+            var icon = document.getElementById("icon");
+            if (icon) {
+                icon.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon.style.width = "32px";
+                icon.style.height = "32px";
+            }
+            cover.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            cover.style.width = "56px";
+            cover.style.height = "56px";
+            cover.style.borderRadius = "22px";
+            cover.style.margin = "0";
+            cover.style.left = "18px";
+            cover.style.top = "50px";
+            cover.classList.remove("open");
+            setTimeout(function() {
+                cover.style.zIndex = "1";
+                cover.style.transition = "";
+            }, 500);
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+            opened = 0;
+        }
+
         // ========== 打开第二个应用动画 ==========
         function openApp2(options) {
             // 如果有其他应用已打开，关闭最早打开的那个
@@ -1770,6 +1799,36 @@
             cover2.style.top = "50px";
             cover2.classList.remove("open");
             // 动画完成后恢复层级和清理transition
+            setTimeout(function() {
+                cover2.style.zIndex = "2";
+                cover2.style.transition = "";
+            }, 500);
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+            opened2 = 0;
+        }
+
+        // ========== 关闭第二个应用动画（不恢复图标位置） ==========
+        function closeApp2WithoutRestore() {
+            var icon2 = document.getElementById("icon2");
+            if (icon2) {
+                icon2.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon2.style.width = "32px";
+                icon2.style.height = "32px";
+            }
+            cover2.style.transition = "transform 0.5s cubic-bezier(0.25, 1, 0.25, 1), width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            cover2.style.transform = "scale(1)";
+            cover2.style.width = "56px";
+            cover2.style.height = "56px";
+            cover2.style.borderRadius = "22px";
+            cover2.style.margin = "0";
+            cover2.style.left = "88px";
+            cover2.style.top = "50px";
+            cover2.classList.remove("open");
             setTimeout(function() {
                 cover2.style.zIndex = "2";
                 cover2.style.transition = "";
@@ -1861,6 +1920,36 @@
             opened3 = 0;
         }
 
+        // ========== 关闭第三个应用动画（不恢复图标位置） ==========
+        function closeApp3WithoutRestore() {
+            var icon3 = document.getElementById("icon3");
+            if (icon3) {
+                icon3.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon3.style.width = "32px";
+                icon3.style.height = "32px";
+            }
+            cover3.style.transition = "transform 0.5s cubic-bezier(0.25, 1, 0.25, 1), width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            cover3.style.transform = "scale(1)";
+            cover3.style.width = "56px";
+            cover3.style.height = "56px";
+            cover3.style.borderRadius = "22px";
+            cover3.style.margin = "0";
+            cover3.style.left = "158px";
+            cover3.style.top = "50px";
+            cover3.classList.remove("open");
+            setTimeout(function() {
+                cover3.style.zIndex = "3";
+                cover3.style.transition = "";
+            }, 500);
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+            opened3 = 0;
+        }
+
         // ========== 打开第四个应用动画 ==========
         function openApp4(options) {
             // 如果有其他应用已打开，关闭最早打开的那个
@@ -1938,7 +2027,37 @@
             }
             opened4 = 0;
         }
-        
+
+        // ========== 关闭第四个应用动画（不恢复图标位置） ==========
+        function closeApp4WithoutRestore() {
+            var icon4 = document.getElementById("icon4");
+            if (icon4) {
+                icon4.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+                icon4.style.width = "32px";
+                icon4.style.height = "32px";
+            }
+            cover4.style.transition = "transform 0.5s cubic-bezier(0.25, 1, 0.25, 1), width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
+            cover4.style.transform = "scale(1)";
+            cover4.style.width = "56px";
+            cover4.style.height = "56px";
+            cover4.style.borderRadius = "22px";
+            cover4.style.margin = "0";
+            cover4.style.left = "228px";
+            cover4.style.top = "50px";
+            cover4.classList.remove("open");
+            setTimeout(function() {
+                cover4.style.zIndex = "4";
+                cover4.style.transition = "";
+            }, 500);
+            if (backdrop) {
+                backdrop.classList.remove("show");
+            }
+            if (wallpaper) {
+                wallpaper.classList.remove("zoomed");
+            }
+            opened4 = 0;
+        }
+
         // ========== 第二个图标点击事件 ==========
         cover2.addEventListener("click", function(e) {
             // 如果点击的是应用内容区域，不执行关闭
