@@ -1530,24 +1530,20 @@
         var opened4 = 0; // 第四个应用状态：0=关闭，1=打开，默认关闭
         var appOpenTime = {1: Date.now(), 2: 0, 3: 0, 4: 0}; // 记录每个应用的打开时间
 
-        // ========== 检查并关闭最早打开的应用 ==========
+        // ========== 检查并关闭其他已打开的应用 ==========
         function closeEarliestApp(excludeAppId) {
-            var openApps = [];
-            if (opened === 1 && excludeAppId !== 1) openApps.push({id: 1, time: appOpenTime[1]});
-            if (opened2 === 1 && excludeAppId !== 2) openApps.push({id: 2, time: appOpenTime[2]});
-            if (opened3 === 1 && excludeAppId !== 3) openApps.push({id: 3, time: appOpenTime[3]});
-            if (opened4 === 1 && excludeAppId !== 4) openApps.push({id: 4, time: appOpenTime[4]});
-
-            if (openApps.length >= 1) {
-                // 按时间排序，找出最早打开的
-                openApps.sort(function(a, b) { return a.time - b.time; });
-                var earliestApp = openApps[0];
-
-                // 关闭最早打开的应用（不恢复图标位置，由新应用的打开流程统一处理）
-                if (earliestApp.id === 1) closeAppWithoutRestore();
-                else if (earliestApp.id === 2) closeApp2WithoutRestore();
-                else if (earliestApp.id === 3) closeApp3WithoutRestore();
-                else if (earliestApp.id === 4) closeApp4WithoutRestore();
+            // 关闭所有其他已打开的应用（不恢复图标位置，由新应用的打开流程统一处理）
+            if (opened === 1 && excludeAppId !== 1) {
+                closeAppWithoutRestore();
+            }
+            if (opened2 === 1 && excludeAppId !== 2) {
+                closeApp2WithoutRestore();
+            }
+            if (opened3 === 1 && excludeAppId !== 3) {
+                closeApp3WithoutRestore();
+            }
+            if (opened4 === 1 && excludeAppId !== 4) {
+                closeApp4WithoutRestore();
             }
         }
 
