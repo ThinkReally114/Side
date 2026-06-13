@@ -2058,6 +2058,19 @@
             opened4 = 0;
         }
 
+        // ========== 第一个图标点击事件 ==========
+        cover.addEventListener("click", function(e) {
+            // 如果点击的是应用内容区域，不执行关闭
+            if (e.target.closest('.app-content')) {
+                return;
+            }
+            if (opened === 0) {
+                openApp();
+            } else {
+                closeApp();
+            }
+        });
+
         // ========== 第二个图标点击事件 ==========
         cover2.addEventListener("click", function(e) {
             // 如果点击的是应用内容区域，不执行关闭
