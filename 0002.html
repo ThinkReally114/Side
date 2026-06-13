@@ -1102,6 +1102,14 @@
             z-index: 1001;
             pointer-events: none;
         }
+
+        /* 主容器内的小白条定位 */
+        #container .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
     </style>
 </head>
 
@@ -1491,8 +1499,10 @@
                 </div>
             </div>
         </div>
+        <!-- 底部小白条 -->
+        <div class="home-indicator"></div>
     </div>
-    
+
     <script>
         // ========== 状态栏时间更新 ==========
         function updateStatusTime() {
@@ -2770,8 +2780,6 @@
             }
         })();
     </script>
-    <!-- 底部小白条 -->
-    <div class="home-indicator"></div>
 </body>
 
 </html>
