@@ -1660,6 +1660,7 @@
                 icon.style.height = "32px";
             }
             // 遮罩恢复初始大小和位置
+            cover.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
             cover.style.width = "56px";
             cover.style.height = "56px";
             cover.style.borderRadius = "22px"; // 恢复圆角
@@ -1667,9 +1668,10 @@
             cover.style.left = "18px";
             cover.style.top = "50px"; // 恢复到初始位置 (再上移50px)
             cover.classList.remove("open"); // 移除展开状态类
-            // 动画完成后恢复层级
+            // 动画完成后恢复层级和清理transition
             setTimeout(function() {
                 cover.style.zIndex = "1";
+                cover.style.transition = "";
             }, 500);
             // 隐藏背景压暗模糊层
             if (backdrop) {
@@ -1730,6 +1732,7 @@
                 icon2.style.width = "32px";
                 icon2.style.height = "32px";
             }
+            cover2.style.transition = "transform 0.5s cubic-bezier(0.25, 1, 0.25, 1), width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
             cover2.style.transform = "scale(1)";
             cover2.style.width = "56px";
             cover2.style.height = "56px";
@@ -1738,9 +1741,10 @@
             cover2.style.left = "88px";
             cover2.style.top = "50px";
             cover2.classList.remove("open");
-            // 动画完成后恢复层级
+            // 动画完成后恢复层级和清理transition
             setTimeout(function() {
                 cover2.style.zIndex = "2";
+                cover2.style.transition = "";
             }, 500);
             if (backdrop) {
                 backdrop.classList.remove("show");
@@ -1802,6 +1806,7 @@
                 icon3.style.width = "32px";
                 icon3.style.height = "32px";
             }
+            cover3.style.transition = "transform 0.5s cubic-bezier(0.25, 1, 0.25, 1), width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
             cover3.style.transform = "scale(1)";
             cover3.style.width = "56px";
             cover3.style.height = "56px";
@@ -1810,9 +1815,10 @@
             cover3.style.left = "158px";
             cover3.style.top = "50px";
             cover3.classList.remove("open");
-            // 动画完成后恢复层级
+            // 动画完成后恢复层级和清理transition
             setTimeout(function() {
                 cover3.style.zIndex = "3";
+                cover3.style.transition = "";
             }, 500);
             if (backdrop) {
                 backdrop.classList.remove("show");
@@ -1874,6 +1880,7 @@
                 icon4.style.width = "32px";
                 icon4.style.height = "32px";
             }
+            cover4.style.transition = "transform 0.5s cubic-bezier(0.25, 1, 0.25, 1), width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), left 0.5s cubic-bezier(0.25, 1, 0.25, 1), top 0.5s cubic-bezier(0.25, 1, 0.25, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
             cover4.style.transform = "scale(1)";
             cover4.style.width = "56px";
             cover4.style.height = "56px";
@@ -1882,9 +1889,10 @@
             cover4.style.left = "228px";
             cover4.style.top = "50px";
             cover4.classList.remove("open");
-            // 动画完成后恢复层级
+            // 动画完成后恢复层级和清理transition
             setTimeout(function() {
                 cover4.style.zIndex = "4";
+                cover4.style.transition = "";
             }, 500);
             if (backdrop) {
                 backdrop.classList.remove("show");
