@@ -1528,6 +1528,28 @@
         var opened2 = 0; // 第二个应用状态：0=关闭，1=打开，默认关闭
         var opened3 = 0; // 第三个应用状态：0=关闭，1=打开，默认关闭
         var opened4 = 0; // 第四个应用状态：0=关闭，1=打开，默认关闭
+        var appOpenTime = {1: Date.now(), 2: 0, 3: 0, 4: 0}; // 记录每个应用的打开时间
+
+        // ========== 检查并关闭最早打开的应用 ==========
+        function closeEarliestApp(excludeAppId) {
+            var openApps = [];
+            if (opened === 1 && excludeAppId !== 1) openApps.push({id: 1, time: appOpenTime[1]});
+            if (opened2 === 1 && excludeAppId !== 2) openApps.push({id: 2, time: appOpenTime[2]});
+            if (opened3 === 1 && excludeAppId !== 3) openApps.push({id: 3, time: appOpenTime[3]});
+            if (opened4 === 1 && excludeAppId !== 4) openApps.push({id: 4, time: appOpenTime[4]});
+
+            if (openApps.length >= 1) {
+                // 按时间排序，找出最早打开的
+                openApps.sort(function(a, b) { return a.time - b.time; });
+                var earliestApp = openApps[0];
+
+                // 关闭最早打开的应用
+                if (earliestApp.id === 1) closeApp();
+                else if (earliestApp.id === 2) closeApp2();
+                else if (earliestApp.id === 3) closeApp3();
+                else if (earliestApp.id === 4) closeApp4();
+            }
+        }
 
         // ========== 打开应用动画 ==========
         /**
@@ -1535,6 +1557,12 @@
          * @param {string} options - 可选参数，"gestrue"表示手势触发
          */
         function openApp(options) {
+            // 如果有其他应用已打开，关闭最早打开的那个
+            closeEarliestApp(1);
+
+            // 记录打开时间
+            appOpenTime[1] = Date.now();
+
             // 先给图标添加过渡动画
             var icon = document.getElementById("icon");
             if (icon) {
@@ -1598,6 +1626,12 @@
 
         // ========== 打开第二个应用动画 ==========
         function openApp2(options) {
+            // 如果有其他应用已打开，关闭最早打开的那个
+            closeEarliestApp(2);
+
+            // 记录打开时间
+            appOpenTime[2] = Date.now();
+
             var icon2 = document.getElementById("icon2");
             if (icon2) {
                 icon2.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
@@ -1656,6 +1690,12 @@
 
         // ========== 打开第三个应用动画 ==========
         function openApp3(options) {
+            // 如果有其他应用已打开，关闭最早打开的那个
+            closeEarliestApp(3);
+
+            // 记录打开时间
+            appOpenTime[3] = Date.now();
+
             var icon3 = document.getElementById("icon3");
             if (icon3) {
                 icon3.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
@@ -1716,6 +1756,12 @@
 
         // ========== 打开第四个应用动画 ==========
         function openApp4(options) {
+            // 如果有其他应用已打开，关闭最早打开的那个
+            closeEarliestApp(4);
+
+            // 记录打开时间
+            appOpenTime[4] = Date.now();
+
             var icon4 = document.getElementById("icon4");
             if (icon4) {
                 icon4.style.transition = "width 0.5s cubic-bezier(0.25, 1, 0.25, 1), height 0.5s cubic-bezier(0.25, 1, 0.25, 1), margin-top 0.5s cubic-bezier(0.25, 1, 0.25, 1)";
