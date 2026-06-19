@@ -128,7 +128,7 @@
                 blur: '这里有流畅的动画和高性能模糊效果喵',
                 tryNow: '快来试试喵！',
                 githubRepo: 'GitHub 仓库喵',
-                bilibili: '📺 Bilibili 喵',
+                bilibili: '参加测试喵',
                 mitLicense: 'MIT 许可证喵',
                 nativeFrontend: '原生前端开发喵',
                 multiBrowser: '多浏览器兼容喵',
