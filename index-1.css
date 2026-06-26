@@ -582,6 +582,18 @@
             color: var(--text-copyright);
             margin-bottom: 18px;
         }
+        /* ICP备案链接样式 */
+        .icp-link {
+            display: block;
+            font-size: 12px;
+            color: var(--text-copyright);
+            margin-bottom: 12px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .icp-link:hover {
+            color: var(--accent-color);
+        }
         /* 标识容器样式 */
         .protected-badges {
             display: flex;
